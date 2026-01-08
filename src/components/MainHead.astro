@@ -7,8 +7,8 @@ interface Props {
 }
 
 const {
-	title = 'Jeanine White: Personal Site',
-	description = 'The personal site of Jeanine White',
+	title = 'Saksham Singh: Personal Site',
+	description = 'The personal site of Saksham Singh',
 } = Astro.props;
 ---
 
@@ -33,15 +33,236 @@ const {
 		}
 		return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
 	};
+	const setTheme = (dark) => {
+		document.documentElement.classList[dark ? 'add' : 'remove']('theme-dark');
+		document.documentElement.style.setProperty(
+			'--bg-override',
+			dark ? 'var(--bg-override-dark)' : 'var(--bg-override-light)',
+		);
+	};
+
 	const isDark = getThemePreference() === 'dark';
-	document.documentElement.classList[isDark ? 'add' : 'remove']('theme-dark');
+	setTheme(isDark);
 
 	if (typeof localStorage !== 'undefined') {
 		// Watch the document element and persist user preference when it changes.
 		const observer = new MutationObserver(() => {
 			const isDark = document.documentElement.classList.contains('theme-dark');
+			document.documentElement.style.setProperty(
+				'--bg-override',
+				isDark ? 'var(--bg-override-dark)' : 'var(--bg-override-light)',
+			);
 			localStorage.setItem('theme', isDark ? 'dark' : 'light');
 		});
 		observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
 	}
+</script>
+
+<script is:inline>
+	// CRITICAL: Hide animated elements immediately to prevent flash
+	// This runs inline in the <head> before any content renders
+	(function() {
+		// Hide elements as soon as DOM is interactive
+		const hideElements = () => {
+			const elements = document.querySelectorAll('[data-type-speed], [data-fade-in-delay]');
+			elements.forEach(el => {
+				el.style.setProperty('opacity', '0', 'important');
+				el.style.setProperty('visibility', 'visible', 'important');
+				// Hide parent buttons too
+				const button = el.closest('button');
+				if (button) {
+					button.style.setProperty('opacity', '0', 'important');
+				}
+			});
+		};
+		
+		// Try to hide immediately
+		if (document.readyState === 'loading') {
+			document.addEventListener('DOMContentLoaded', hideElements);
+		} else {
+			hideElements();
+		}
+		
+		// Also hide on interactive state
+		if (document.readyState !== 'complete') {
+			document.addEventListener('readystatechange', () => {
+				if (document.readyState === 'interactive') {
+					hideElements();
+				}
+			});
+		}
+	})();
+</script>
+
+<script is:inline>
+	// Typewriter animation now handled by textAppearance.ts module
+	// This inline script is disabled to prevent conflicts and duplicate text rendering
+	(() => {
+		if (window.__typewriterInit) return;
+		window.__typewriterInit = true;
+
+		// Typewriter disabled - using textAppearance.ts instead
+		const DISABLED = true;
+		if (DISABLED) return;
+
+		const prefersReduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+		if (prefersReduce) return;
+
+		// Cookie utilities
+		const getCookie = (name) => {
+			const value = `; ${document.cookie}`;
+			const parts = value.split(`; ${name}=`);
+			if (parts.length === 2) return parts.pop().split(';').shift();
+			return null;
+		};
+
+		const setCookie = (name, value, days) => {
+			const expires = new Date(Date.now() + days * 864e5).toUTCString();
+			document.cookie = `${name}=${value}; expires=${expires}; path=/; SameSite=Lax`;
+		};
+
+		// Generate page-specific cookie name from pathname
+		const getPageCookieName = () => {
+			const path = window.location.pathname.replace(/\//g, '_').replace(/^_|_$/g, '') || 'home';
+			return `text_anim_seen_${path}`;
+		};
+
+		// Check if animations should run for this page
+		const shouldRunAnimations = () => {
+			if (!ENABLE_ONE_TIME_TEXT_ANIMATIONS) return false;
+			const cookieName = getPageCookieName();
+			return getCookie(cookieName) !== 'true';
+		};
+
+		// Mark animations as completed for this page
+		const markAnimationsComplete = () => {
+			if (!ENABLE_ONE_TIME_TEXT_ANIMATIONS) return;
+			const cookieName = getPageCookieName();
+			setCookie(cookieName, 'true', COOKIE_EXPIRY_DAYS);
+		};
+
+		const defaults = {
+			// Lightning fast typing: aim to complete typical pages ~0.5s
+			speed: 1, // ms per char
+			jitter: 0, // keep consistent, no random delay
+			cursorStyle: 'block', // bar | block | underline
+			blinkRate: 400,
+			initialDelay: 0, // start immediately after DOM ready
+		};
+
+		const readNumber = (value) => {
+			const n = Number(value);
+			return Number.isFinite(n) ? n : undefined;
+		};
+
+		const cursor = document.createElement('span');
+		cursor.className = `typewriter-cursor cursor-${defaults.cursorStyle}`;
+		cursor.setAttribute('aria-hidden', 'true');
+		cursor.style.setProperty('--cursor-blink-rate', `${defaults.blinkRate}ms`);
+
+		const skipTags = new Set(['SCRIPT', 'STYLE', 'NOSCRIPT', 'TEMPLATE', 'TEXTAREA', 'INPUT', 'OPTION', 'SELECT']);
+
+		const collect = (root) => {
+			const nodes = [];
+			const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
+				acceptNode(node) {
+					if (!node.textContent || !node.textContent.trim()) return NodeFilter.FILTER_REJECT;
+					const parent = node.parentElement;
+					if (!parent) return NodeFilter.FILTER_REJECT;
+					if (parent.closest('[data-no-type]')) return NodeFilter.FILTER_REJECT;
+					if (parent.closest('[data-type-speed]')) return NodeFilter.FILTER_REJECT;
+					if (parent.closest('[contenteditable="true"]')) return NodeFilter.FILTER_REJECT;
+					if (skipTags.has(parent.tagName)) return NodeFilter.FILTER_REJECT;
+					return NodeFilter.FILTER_ACCEPT;
+				},
+			});
+			while (walker.nextNode()) nodes.push(walker.currentNode);
+			return nodes;
+		};
+
+		const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+		const applyCursorStyle = (style) => {
+			cursor.classList.remove('cursor-bar', 'cursor-block', 'cursor-underline');
+			cursor.classList.add(`cursor-${style}`);
+		};
+
+		const typeOne = async ({ text, span, config }) => {
+			if (!text) return;
+			if (config.delay) await sleep(config.delay);
+			applyCursorStyle(config.cursorStyle);
+			for (let i = 0; i < text.length; i++) {
+				span.textContent += text[i];
+				span.append(cursor);
+				const jitter = config.jitter ? (Math.random() * config.jitter - config.jitter / 2) : 0;
+				const delay = Math.max(5, config.speed + jitter);
+				await sleep(delay);
+			}
+		};
+
+		const run = async () => {
+			// Check if animations should run for this page
+			if (!shouldRunAnimations()) {
+				// Render all text immediately without animation
+				const targets = collect(document.body);
+				targets.forEach((textNode) => {
+					// Text is already present, no need to modify
+					// Just ensure no animation artifacts remain
+				});
+				// Show any elements that have data-type-speed (handled by other scripts)
+				const dataTypeElements = document.body.querySelectorAll('[data-type-speed]');
+				dataTypeElements.forEach((el) => {
+					el.style.setProperty('opacity', '1', 'important');
+					const button = el.closest('button');
+					if (button) button.style.setProperty('opacity', '1', 'important');
+				});
+				return;
+			}
+
+			// defer until body content is parsed to ensure we collect all text nodes
+			if (!document.body) return;
+			document.body.append(cursor);
+			const targets = collect(document.body).map((textNode) => {
+				const original = textNode.textContent || '';
+				const span = document.createElement('span');
+				span.className = 'typewriter-text';
+				span.setAttribute('role', 'text');
+				span.setAttribute('aria-label', original);
+				const parent = textNode.parentNode;
+				parent.replaceChild(span, textNode);
+
+				const el = span.closest('[data-type]') || parent;
+				const speedOverride = readNumber(el?.dataset.typeSpeed);
+				const jitterOverride = readNumber(el?.dataset.typeJitter);
+				const cursorOverride = el?.dataset.typeCursor;
+				const delayOverride = readNumber(el?.dataset.typeDelay);
+
+				return {
+					text: original,
+					span,
+					config: {
+						speed: speedOverride ?? defaults.speed,
+						jitter: jitterOverride ?? defaults.jitter,
+						cursorStyle: cursorOverride ?? defaults.cursorStyle,
+						delay: delayOverride ?? 0,
+					},
+				};
+			});
+
+			await sleep(defaults.initialDelay);
+			for (const target of targets) {
+				await typeOne(target);
+			}
+			cursor.remove();
+			
+			// Mark animations as complete after they finish
+			markAnimationsComplete();
+		};
+
+		if (document.readyState === 'complete' || document.readyState === 'interactive') {
+			run();
+		} else {
+			document.addEventListener('DOMContentLoaded', run, { once: true });
+		}
+	})();
 </script>

@@ -1,0 +1,312 @@
+---
+/**
+ * Enhanced Project Section Component
+ * 
+ * Renders project cards from registry data with optional custom visuals.
+ * Maintains all existing behavior (styling, hover, navigation) while adding 
+ * support for custom visual components.
+ */
+import type { ProjectCard } from '../data/projectRegistry';
+
+// Import visual components
+import PaperPigeonVisual from './visuals/PaperPigeonVisual.astro';
+import LinearAlgebraVisual from './visuals/LinearAlgebraVisual.astro';
+
+interface Props {
+	project: ProjectCard;
+	index: number;
+}
+
+const { project, index } = Astro.props;
+
+// Visual component mapping
+const visualComponents = {
+  'PaperPigeonVisual': PaperPigeonVisual,
+  'LinearAlgebraVisual': LinearAlgebraVisual,
+};
+
+type VisualComponentType = keyof typeof visualComponents;
+
+// Check if project has a custom visual component
+const hasCustomVisual = project.visualComponent && project.visualComponent in visualComponents;
+const VisualComponent = hasCustomVisual 
+  ? visualComponents[project.visualComponent as VisualComponentType]
+  : null;
+
+---
+
+<a class="project-section" href={`/work/${project.id}`} data-color={project.colorTheme} data-index={index}>
+	<span class="project-tag">&gt; SinghDevs</span>
+	<div class="project-bg parallax-bg" data-parallax-speed="0.5">
+    <!-- Custom visual or fallback -->
+    <div class="visual-container">
+      {VisualComponent && <VisualComponent />}
+      {!VisualComponent && project.img && (
+        <div class="fallback-visual">
+          <img src={project.img} alt={project.img_alt || project.title} />
+        </div>
+      )}
+      {!VisualComponent && !project.img && (
+        <div class="default-visual">
+          <div class="geometric-pattern">
+            <div class="pattern-grid"></div>
+          </div>
+        </div>
+      )}
+    </div>
+  </div>
+	{!hasCustomVisual && (
+		<div class="project-content parallax-content">
+			<h3 class="project-title">{project.title}</h3>
+			<p class="project-description">{project.description}</p>
+			<div class="project-tags">
+				{project.tags.map(tag => <span class="tag">{tag}</span>)}
+			</div>
+		</div>
+	)}
+</a>
+
+<script>
+  // Debug: Check rendered cards after DOM is ready
+  document.addEventListener('DOMContentLoaded', () => {
+    const projectSections = document.querySelectorAll('.project-section');
+    console.log('🎯 DEBUG: ProjectSection DOM ready, found cards:', projectSections.length);
+    
+    projectSections.forEach((section, index) => {
+      const colorTheme = section.getAttribute('data-color');
+      const visualContainer = section.querySelector('.visual-container');
+      const hasVisualContainer = !!visualContainer;
+      
+      console.log(`🎯 DEBUG: Card ${index}: color=${colorTheme}, hasVisualContainer=${hasVisualContainer}`);
+      
+      if (colorTheme === 'cyan') {
+        console.log('🎨 DEBUG: Found Paper Pigeon card at index:', index);
+        if (visualContainer) {
+          const bgStyle = window.getComputedStyle(visualContainer);
+          console.log('🎨 DEBUG: Initial Paper Pigeon background:', bgStyle.backgroundColor);
+        }
+      }
+    });
+  });
+</script>
+
+<style>
+	.project-section {
+		position: relative;
+		width: 100vw;
+		height: 70vh;
+		min-height: 500px;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		overflow: hidden;
+		text-decoration: none;
+		cursor: pointer;
+		transition: opacity 0.4s ease, filter 0.4s ease, transform 0.3s ease;
+		opacity: 0.3;
+		filter: blur(4px) grayscale(0.7);
+	}
+
+	.project-tag {
+		position: absolute;
+		top: 1rem;
+		left: 1rem;
+		display: flex;
+		gap: 0.5rem;
+		padding: 0.5rem 1rem;
+		color: var(--accent-text-over);
+		border: 1px solid var(--accent-regular);
+		background-color: var(--accent-regular);
+		border-radius: 0;
+		font-size: var(--text-sm);
+		font-weight: 500;
+		letter-spacing: 0.05em;
+		text-transform: uppercase;
+		z-index: 10;
+	}
+
+  /* Visual container for custom components or fallbacks */
+  .visual-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1;
+  }
+
+  .fallback-visual img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    opacity: 0.7;
+  }
+
+  .default-visual {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, var(--accent-regular), var(--accent-dark));
+    opacity: 0.6;
+  }
+
+  .geometric-pattern {
+    width: 200px;
+    height: 200px;
+    position: relative;
+  }
+
+  .pattern-grid {
+    width: 100%;
+    height: 100%;
+    background-image: 
+      linear-gradient(45deg, transparent 30%, rgba(255,255,255,0.1) 30%, rgba(255,255,255,0.1) 70%, transparent 70%),
+      linear-gradient(-45deg, transparent 30%, rgba(255,255,255,0.1) 30%, rgba(255,255,255,0.1) 70%, transparent 70%);
+    background-size: 40px 40px;
+    animation: subtle-rotate 8s ease-in-out infinite;
+  }
+
+  @keyframes subtle-rotate {
+    0%, 100% { transform: rotate(0deg) scale(1); }
+    50% { transform: rotate(10deg) scale(1.1); }
+  }
+
+	.project-bg {
+		position: absolute;
+		top: 0;
+		left: 0;
+		width: 100%;
+		height: 100%;
+		background: var(--gray-999);
+		transition: transform 0.6s cubic-bezier(0.19, 1, 0.22, 1);
+		z-index: 0;
+	}
+
+	.project-content {
+		position: relative;
+		z-index: 10;
+		text-align: center;
+		padding: 2rem;
+		max-width: 600px;
+		background: rgba(0, 0, 0, 0.7);
+		backdrop-filter: blur(8px);
+		border-radius: 12px;
+		border: 1px solid rgba(255, 255, 255, 0.1);
+	}
+
+	.project-title {
+		margin: 0 0 1rem 0;
+		font-size: var(--text-2xl);
+		font-weight: 700;
+		color: var(--gray-0);
+		line-height: 1.2;
+	}
+
+	.project-description {
+		margin: 0 0 1rem 0;
+		font-size: var(--text-base);
+		color: var(--gray-200);
+		line-height: 1.5;
+	}
+
+  .project-tags {
+    display: flex;
+    gap: 0.5rem;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .tag {
+    padding: 0.25rem 0.75rem;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 16px;
+    font-size: var(--text-sm);
+    color: var(--gray-200);
+  }
+
+	/* Focus state */
+	.project-section[data-focus="true"],
+	.project-section:focus-visible {
+		opacity: 1 !important;
+		filter: blur(0) grayscale(0) !important;
+		transform: scale(1.02);
+		outline: 2px solid var(--accent-regular);
+		outline-offset: 4px;
+	}
+
+	/* Active state when in focus during scroll navigation */
+	.project-section.active {
+		opacity: 1;
+		filter: blur(0) grayscale(0);
+	}
+
+	/* Hover state */
+	@media (hover: hover) {
+		.project-section:hover {
+			opacity: 1;
+			filter: blur(0) grayscale(0);
+			transform: scale(1.01);
+		}
+	}
+
+	/* Color theme variations */
+	.project-section[data-color="cyan"] {
+		--accent-regular: hsl(180, 100%, 50%);
+		--accent-dark: hsl(180, 100%, 30%);
+		--accent-text-over: hsl(180, 100%, 10%);
+	}
+	
+	/* Paper Pigeon visual proof - pure white background */
+	.project-section[data-color="cyan"] .visual-container {
+		background: white;
+	}
+
+	.project-section[data-color="purple"] {
+		--accent-regular: hsl(280, 89%, 67%);
+		--accent-dark: hsl(270, 100%, 17%);
+		--accent-text-over: hsl(280, 100%, 95%);
+	}
+
+	.project-section[data-color="orange"] {
+		--accent-regular: hsl(25, 85%, 65%);
+		--accent-dark: hsl(25, 85%, 25%);
+		--accent-text-over: hsl(25, 100%, 95%);
+	}
+
+	.project-section[data-color="white"] {
+		--accent-regular: hsl(0, 0%, 90%);
+		--accent-dark: hsl(0, 0%, 20%);
+		--accent-text-over: hsl(0, 0%, 10%);
+	}
+
+  /* Reduced motion support */
+  @media (prefers-reduced-motion: reduce) {
+    .project-section {
+      transition: none;
+    }
+    
+    .pattern-grid {
+      animation: none;
+    }
+    
+    .project-bg {
+      transition: none;
+    }
+  }
+
+	@media (min-width: 50em) {
+		.project-title {
+			font-size: var(--text-3xl);
+		}
+
+		.project-description {
+			font-size: var(--text-lg);
+		}
+	}
+</style>

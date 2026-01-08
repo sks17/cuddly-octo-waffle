@@ -1,0 +1,127 @@
+---
+/**
+ * Paper Pigeon Visual Component
+ * 
+ * Custom interactive visual for the Paper Pigeon project card.
+ * Demonstrates real-time chat bubbles animation.
+ */
+---
+
+<div class="paper-pigeon-visual" id="paper-pigeon-visual">
+  <div class="chat-container">
+    <div class="message bubble-1">Hello! 👋</div>
+    <div class="message bubble-2">Building something amazing...</div>
+    <div class="message bubble-3">Real-time collaboration ✨</div>
+  </div>
+</div>
+
+<script>
+  function initPaperPigeonVisual() {
+    const container = document.getElementById('paper-pigeon-visual');
+    if (!container) return;
+
+    const messages = container.querySelectorAll('.message');
+    let currentMessage = 0;
+    
+    // Check for reduced motion preference
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (prefersReducedMotion) {
+      // Show all messages immediately without animation
+      messages.forEach(msg => {
+        (msg as HTMLElement).style.opacity = '1';
+        (msg as HTMLElement).style.transform = 'translateY(0)';
+      });
+      return;
+    }
+
+    function showNextMessage() {
+      if (currentMessage < messages.length) {
+        const msg = messages[currentMessage] as HTMLElement;
+        msg.style.opacity = '1';
+        msg.style.transform = 'translateY(0) scale(1)';
+        currentMessage++;
+        
+        if (currentMessage < messages.length) {
+          setTimeout(showNextMessage, 1200);
+        } else {
+          // Reset after all messages shown
+          setTimeout(() => {
+            messages.forEach(msg => {
+              (msg as HTMLElement).style.opacity = '0';
+              (msg as HTMLElement).style.transform = 'translateY(20px) scale(0.9)';
+            });
+            currentMessage = 0;
+            setTimeout(showNextMessage, 800);
+          }, 2000);
+        }
+      }
+    }
+
+    // Start animation
+    setTimeout(showNextMessage, 500);
+  }
+
+  // Initialize when component is in view
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initPaperPigeonVisual);
+  } else {
+    initPaperPigeonVisual();
+  }
+</script>
+
+<style>
+  .paper-pigeon-visual {
+    width: 100%;
+    height: 200px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, rgba(0, 150, 255, 0.1), rgba(0, 100, 200, 0.05));
+    border-radius: 8px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .chat-container {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding: 1rem;
+    max-width: 250px;
+  }
+
+  .message {
+    padding: 0.5rem 1rem;
+    border-radius: 16px;
+    color: white;
+    font-size: 0.9rem;
+    opacity: 0;
+    transform: translateY(20px) scale(0.9);
+    transition: opacity 0.6s cubic-bezier(0.25, 0.1, 0.25, 1), 
+                transform 0.6s cubic-bezier(0.25, 0.1, 0.25, 1);
+  }
+
+  .bubble-1 {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    align-self: flex-end;
+  }
+
+  .bubble-2 {
+    background: linear-gradient(135deg, #f093fb, #f5576c);
+    align-self: flex-start;
+  }
+
+  .bubble-3 {
+    background: linear-gradient(135deg, #4facfe, #00f2fe);
+    align-self: flex-end;
+  }
+
+  /* Reduced motion support */
+  @media (prefers-reduced-motion: reduce) {
+    .message {
+      transition: none;
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+</style>

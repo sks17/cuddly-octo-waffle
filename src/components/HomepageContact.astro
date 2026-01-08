@@ -1,0 +1,468 @@
+---
+/**
+ * HomepageContact - Shared contact footer component
+ * 
+ * Contains the "Contact Me" section with email buttons and suggestions system.
+ * Extracted from homepage to be the single source of truth across all pages.
+ */
+
+import Icon from './Icon.astro';
+---
+
+<section class="homepage-contact">
+	<div class="contact-content">
+		<div class="email-actions">
+			<h2>Contact Me</h2>
+			<div class="email-buttons">
+				<a href="mailto:sks17@outlook.com" class="email-btn email-btn--general">
+					<Icon icon="terminal-window" size="1.2em" />
+					<div class="email-info">
+						<span class="email-label">General / Professional</span>
+						<span class="email-address">sks17@outlook.com</span>
+					</div>
+				</a>
+				<a href="mailto:sks0417@cs.washington.edu" class="email-btn email-btn--academic">
+					<Icon icon="rocket-launch" size="1.2em" />
+					<div class="email-info">
+						<span class="email-label">University of Washington / Academic</span>
+						<span class="email-address">sks0417@cs.washington.edu</span>
+					</div>
+				</a>
+				<a href="mailto:sakshamsinghbhs@gmail.com" class="email-btn email-btn--personal">
+					<Icon icon="heart" size="1.2em" />
+					<div class="email-info">
+						<span class="email-label">Personal</span>
+						<span class="email-address">sakshamsinghbhs@gmail.com</span>
+					</div>
+				</a>
+			</div>
+		</div>
+
+		<div class="suggestions-section">
+			<h3>Suggest changes / additions to the website</h3>
+			<div class="suggestions-container">
+				<form class="suggestion-form" id="suggestion-form">
+				<textarea 
+					id="suggestion-input" 
+					class="suggestion-input" 
+					placeholder="Your suggestion..."
+					maxlength="300"
+					rows="1"
+					required
+				></textarea>
+					<button type="submit" class="suggestion-submit">
+						<Icon icon="paper-plane-tilt" size="1em" />
+					</button>
+				</form>
+				<ul class="suggestions-list" id="suggestions-list">
+					<!-- Recent suggestions will appear here -->
+				</ul>
+			</div>
+		</div>
+	</div>
+</section>
+
+<script>
+	function initSuggestionsSystem() {
+		const form = document.getElementById('suggestion-form');
+		const input = document.getElementById('suggestion-input');
+		const list = document.getElementById('suggestions-list');
+
+		if (!form || !input || !list) return;
+
+		// Auto-resize textarea functionality
+		function autoResize() {
+			input.style.height = 'auto';
+			input.style.height = Math.min(input.scrollHeight, 128) + 'px';
+		}
+
+		input.addEventListener('input', autoResize);
+		input.addEventListener('focus', autoResize);
+
+		// Persistent storage for suggestions using localStorage
+		const STORAGE_KEY = 'website-suggestions';
+		let suggestions = [];
+
+		// Load suggestions from localStorage
+		function loadSuggestions() {
+			try {
+				const stored = localStorage.getItem(STORAGE_KEY);
+				if (stored) {
+					suggestions = JSON.parse(stored);
+				}
+			} catch (error) {
+				console.warn('Failed to load suggestions:', error);
+				suggestions = [];
+			}
+		}
+
+		// Save suggestions to localStorage
+		function saveSuggestions() {
+			try {
+				localStorage.setItem(STORAGE_KEY, JSON.stringify(suggestions));
+			} catch (error) {
+				console.warn('Failed to save suggestions:', error);
+			}
+		}
+
+		function renderSuggestions() {
+			list.innerHTML = '';
+			
+			if (suggestions.length === 0) {
+				const emptyState = document.createElement('li');
+				emptyState.textContent = 'No suggestions yet. Be the first!';
+				emptyState.style.opacity = '0.6';
+				emptyState.style.fontStyle = 'italic';
+				list.appendChild(emptyState);
+				return;
+			}
+
+			suggestions.forEach((suggestion, index) => {
+				const li = document.createElement('li');
+				li.textContent = suggestion.text;
+				li.style.animationDelay = `${index * 0.1}s`;
+				li.title = `Suggested on ${new Date(suggestion.timestamp).toLocaleDateString()}`;
+				list.appendChild(li);
+			});
+		}
+
+		function addSuggestion(text) {
+			const trimmed = text.trim();
+			if (!trimmed) return;
+
+			// Create suggestion object with timestamp
+			const suggestion = {
+				text: trimmed,
+				timestamp: Date.now()
+			};
+
+			// Add to beginning of array
+			suggestions.unshift(suggestion);
+
+			// Keep only 10 most recent suggestions
+			if (suggestions.length > 10) {
+				suggestions = suggestions.slice(0, 10);
+			}
+
+			saveSuggestions();
+			renderSuggestions();
+		}
+
+		// Initialize with stored suggestions
+		loadSuggestions();
+		renderSuggestions();
+
+		form.addEventListener('submit', (e) => {
+			e.preventDefault();
+			const value = input.value.trim();
+			
+			if (value) {
+				addSuggestion(value);
+				input.value = '';
+			}
+		});
+
+		// Handle Enter key specifically
+		input.addEventListener('keydown', (e) => {
+			if (e.key === 'Enter' && !e.shiftKey) {
+				e.preventDefault();
+				form.dispatchEvent(new Event('submit'));
+			}
+		});
+	}
+
+	// Initialize when component loads
+	document.addEventListener('DOMContentLoaded', initSuggestionsSystem);
+</script>
+
+<style>
+	/* Homepage Contact Section */
+	
+	.homepage-contact {
+		border-top: 1px solid var(--gray-800);
+		border-bottom: 1px solid var(--gray-800);
+		background: var(--bg-override, var(--gray-999_40));
+		padding: 4rem 1.5rem;
+		box-shadow: var(--shadow-sm);
+	}
+
+	.contact-content {
+		max-width: 80rem;
+		margin: 0 auto;
+		display: flex;
+		flex-direction: column;
+		gap: 3rem;
+		padding: 0 2rem;
+	}
+
+	.email-actions h2 {
+		font-size: var(--text-3xl);
+		color: var(--gray-0);
+		margin: 0 0 2.5rem;
+		text-align: center;
+		font-weight: 700;
+		letter-spacing: -0.025em;
+	}
+
+	.email-buttons {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+		gap: 1.5rem;
+		max-width: none;
+	}
+
+	.email-btn {
+		display: flex;
+		align-items: center;
+		gap: 1rem;
+		padding: 1rem 1.5rem;
+		background: var(--gray-900);
+		border: 1px solid var(--gray-800);
+		border-radius: 0.5rem;
+		text-decoration: none;
+		transition: all 0.2s ease;
+		color: var(--gray-100);
+	}
+
+	.email-btn:hover,
+	.email-btn:focus {
+		background: var(--gray-800);
+		border-color: var(--accent-regular);
+		color: var(--gray-0);
+		transform: translateY(-2px);
+		box-shadow: var(--shadow-md);
+	}
+
+	.email-btn:active {
+		transform: translateY(0);
+	}
+
+	.email-info {
+		display: flex;
+		flex-direction: column;
+		gap: 0.25rem;
+		min-width: 0;
+		flex: 1;
+	}
+
+	.email-label {
+		font-weight: 600;
+		font-size: var(--text-sm);
+		color: var(--accent-light);
+	}
+
+	.email-address {
+		font-family: var(--font-mono);
+		font-size: var(--text-xs);
+		color: var(--gray-300);
+		word-break: break-all;
+	}
+
+	/* Suggestions Section */
+	.suggestions-section {
+		background: var(--gray-900_60);
+		border: 1px solid var(--gray-700);
+		border-radius: 1rem;
+		padding: 2.5rem;
+		box-shadow: var(--shadow-md);
+		backdrop-filter: blur(10px);
+	}
+
+	.suggestions-section h3 {
+		font-size: var(--text-xl);
+		color: var(--gray-100);
+		margin: 0 0 2rem;
+		text-align: center;
+		font-weight: 600;
+		letter-spacing: -0.015em;
+	}
+
+	.suggestions-container {
+		display: flex;
+		flex-direction: column;
+		gap: 1.5rem;
+		max-width: none;
+	}
+
+	.suggestions-input-area {
+		flex: 0 0 auto;
+	}
+
+	.suggestion-form {
+		display: flex;
+		gap: 0.75rem;
+		align-items: flex-end;
+		background: var(--gray-900);
+		border: 2px solid var(--gray-700);
+		border-radius: 0.5rem;
+		padding: 0.75rem;
+		transition: border-color 0.3s ease;
+	}
+
+	.suggestion-form:focus-within {
+		border-color: var(--accent-regular);
+		box-shadow: 0 0 0 3px var(--accent-regular_20);
+	}
+
+	.suggestion-input {
+		flex: 1;
+		padding: 0.5rem 0;
+		min-height: 2.5rem;
+		max-height: 8rem;
+		resize: none;
+		overflow-y: auto;
+		background: transparent;
+		border: none;
+		color: var(--gray-100);
+		font-size: var(--text-sm);
+		font-family: var(--font-mono);
+		line-height: 1.5;
+		outline: none;
+	}
+
+	.suggestion-input::placeholder {
+		color: var(--gray-500);
+		font-style: italic;
+	}
+
+	.suggestion-submit {
+		padding: 0.75rem;
+		min-width: 2.5rem;
+		height: 2.5rem;
+		background: var(--accent-regular);
+		border: none;
+		border-radius: 0.25rem;
+		color: var(--gray-0);
+		cursor: pointer;
+		transition: all 0.3s ease;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		flex-shrink: 0;
+	}
+
+	.suggestion-submit:hover {
+		background: var(--accent-light);
+		transform: translateY(-1px);
+		box-shadow: var(--shadow-md);
+	}
+
+	.suggestion-submit:active {
+		transform: translateY(0);
+	}
+
+	.suggestions-output {
+		flex: 1;
+		min-width: 0;
+	}
+
+	.suggestions-list {
+		list-style: none;
+		padding: 0;
+		margin: 0;
+		display: flex;
+		flex-direction: column;
+		gap: 0.75rem;
+		max-height: 300px;
+		overflow-y: auto;
+	}
+
+	.suggestions-list li {
+		padding: 1rem 1.5rem;
+		background: var(--gray-800);
+		border: 1px solid var(--gray-700);
+		border-radius: 0.5rem;
+		color: var(--gray-200);
+		font-size: var(--text-sm);
+		line-height: 1.5;
+		animation: slideIn 0.3s ease forwards;
+		opacity: 0;
+		transform: translateY(10px);
+	}
+
+	@keyframes slideIn {
+		to {
+			opacity: 1;
+			transform: translateY(0);
+		}
+	}
+
+	/* Responsive Design */
+	@media (min-width: 50em) {
+		.homepage-contact {
+			padding: 6rem 1.5rem;
+		}
+
+		.contact-content {
+			flex-direction: row;
+			gap: 4rem;
+			align-items: flex-start;
+		}
+
+		.email-actions {
+			flex: 1;
+		}
+
+		.email-actions h2 {
+			text-align: left;
+			font-size: var(--text-3xl);
+			margin-bottom: 1.5rem;
+		}
+
+		.suggestions-section {
+			flex: 1;
+			max-width: 35rem;
+		}
+
+		.suggestions-container {
+			flex-direction: row;
+			gap: 2rem;
+			align-items: flex-start;
+		}
+
+		.suggestions-input-area {
+			flex: 0 0 20rem;
+		}
+
+		.suggestions-output {
+			flex: 1;
+			min-width: 0;
+		}
+	}
+
+	@media (min-width: 75em) {
+		.contact-content {
+			flex-direction: column;
+			gap: 4rem;
+		}
+
+		.email-actions {
+			flex: none;
+			margin-bottom: 2rem;
+		}
+
+		.email-buttons {
+			grid-template-columns: repeat(3, 1fr);
+			gap: 2rem;
+		}
+
+		.email-btn {
+			flex-direction: column;
+			text-align: center;
+			padding: 2.5rem 2rem;
+			gap: 1.5rem;
+			min-height: 12rem;
+		}
+
+		.email-info {
+			align-items: center;
+			gap: 0.75rem;
+		}
+
+		.suggestions-section {
+			flex: none;
+			max-width: 50rem;
+			margin: 0 auto;
+		}
+	}
+</style>

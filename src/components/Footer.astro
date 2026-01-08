@@ -4,18 +4,20 @@ import Icon from './Icon.astro';
 const currentYear = new Date().getFullYear();
 ---
 
-<footer>
+<footer data-no-type>
 	<div class="group">
 		<p>
-			Designed & Developed in Portland with <a href="https://astro.build/">Astro</a>
+			Designed With <a href="https://astro.build/">Astro</a>
 			<Icon icon="rocket-launch" size="1.2em" />
 		</p>
-		<p>&copy; {currentYear} Jeanine White</p>
+		<p>
+			Secured with <a href="https://www.cloudflare.com/">CloudFlare</a>
+		</p>
+		<p>&copy; {currentYear} Saksham Singh</p>
 	</div>
 	<p class="socials">
-		<a href="https://twitter.com/me"> Twitter</a>
 		<a href="https://github.com/me"> GitHub</a>
-		<a href="https://codepen.io/me"> CodePen</a>
+		<a href="https://www.linkedin.com/in/saksham-singh-a08a43282/"> LinkedIn</a>
 	</p>
 </footer>
 <style>

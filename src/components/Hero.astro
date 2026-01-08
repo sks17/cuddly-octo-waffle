@@ -3,15 +3,21 @@ interface Props {
 	title: string;
 	tagline?: string;
 	align?: 'start' | 'center';
+	titleAttrs?: Record<string, string | number | boolean>;
+	taglineAttrs?: Record<string, string | number | boolean>;
 }
 
-const { align = 'center', tagline, title } = Astro.props;
+const { align = 'center', tagline, title, titleAttrs = {}, taglineAttrs = {} } = Astro.props;
 ---
 
 <div class:list={['hero stack gap-4', align]}>
 	<div class="stack gap-2">
-		<h1 class="title">{title}</h1>
-		{tagline && <p class="tagline">{tagline}</p>}
+		<h1 class="title" {...titleAttrs}>{title}</h1>
+		{tagline && (
+			<p class="tagline" {...taglineAttrs}>
+				{tagline}
+			</p>
+		)}
 	</div>
 	<slot />
 </div>
@@ -20,12 +26,17 @@ const { align = 'center', tagline, title } = Astro.props;
 	.hero {
 		font-size: var(--text-lg);
 		text-align: center;
+		/* Prepare for smooth transitions */
+		transition: none; /* Initially no transitions until post-typewriter */
 	}
 
 	.title,
 	.tagline {
-		max-width: 37ch;
+		max-width: 60ch;
 		margin-inline: auto;
+		/* Prepare elements for smooth breathing transitions */
+		transform: translateX(0);
+		will-change: auto; /* Reset after transitions complete */
 	}
 
 	.title {
@@ -49,6 +60,16 @@ const { align = 'center', tagline, title } = Astro.props;
 
 		.title {
 			font-size: var(--text-5xl);
+		}
+	}
+	
+	/* Respect reduced motion preference for all hero transitions */
+	@media (prefers-reduced-motion: reduce) {
+		.hero,
+		.title,
+		.tagline {
+			transition: none !important;
+			transform: none !important;
 		}
 	}
 </style>

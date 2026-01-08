@@ -1,10 +1,10 @@
 ---
 import { getCollection } from 'astro:content';
-import ContactCTA from '../components/ContactCTA.astro';
 import Grid from '../components/Grid.astro';
 import Hero from '../components/Hero.astro';
 import PortfolioPreview from '../components/PortfolioPreview.astro';
 import BaseLayout from '../layouts/BaseLayout.astro';
+import HomepageContact from '../components/HomepageContact.astro';
 
 const projects = (await getCollection('work')).sort(
 	(a, b) => b.data.publishDate.valueOf() - a.data.publishDate.valueOf(),
@@ -12,8 +12,8 @@ const projects = (await getCollection('work')).sort(
 ---
 
 <BaseLayout
-	title="My Work | Jeanine White"
-	description="Learn about Jeanine White's most recent projects"
+	title="My Work | Saksham Singh"
+	description="Learn about Saksham Singh's most recent projects"
 >
 	<div class="stack gap-20">
 		<main class="wrapper stack gap-8">
@@ -32,6 +32,432 @@ const projects = (await getCollection('work')).sort(
 				}
 			</Grid>
 		</main>
-		<ContactCTA />
+		<HomepageContact />
 	</div>
 </BaseLayout>
+
+<script>
+	document.addEventListener('DOMContentLoaded', () => {
+		function initSuggestionsSystem() {
+			const form = document.getElementById('suggestion-form');
+			const input = document.getElementById('suggestion-input');
+			const list = document.getElementById('suggestions-list');
+
+			if (!form || !input || !list) return;
+
+			// Auto-resize textarea functionality
+			function autoResize() {
+				input.style.height = 'auto';
+				input.style.height = Math.min(input.scrollHeight, 128) + 'px';
+			}
+
+			input.addEventListener('input', autoResize);
+			input.addEventListener('focus', autoResize);
+
+			// Persistent storage for suggestions using localStorage
+			const STORAGE_KEY = 'website-suggestions';
+			let suggestions = [];
+
+			// Load, save, render, and add functions for suggestions
+			function loadSuggestions() {
+				try {
+					const stored = localStorage.getItem(STORAGE_KEY);
+					if (stored) {
+						suggestions = JSON.parse(stored);
+					}
+				} catch (error) {
+					console.warn('Failed to load suggestions:', error);
+					suggestions = [];
+				}
+			}
+
+			function saveSuggestions() {
+				try {
+					localStorage.setItem(STORAGE_KEY, JSON.stringify(suggestions));
+				} catch (error) {
+					console.warn('Failed to save suggestions:', error);
+				}
+			}
+
+			function renderSuggestions() {
+				list.innerHTML = '';
+				
+				if (suggestions.length === 0) {
+					const emptyState = document.createElement('li');
+					emptyState.textContent = 'No suggestions yet. Be the first!';
+					emptyState.style.opacity = '0.6';
+					emptyState.style.fontStyle = 'italic';
+					list.appendChild(emptyState);
+					return;
+				}
+
+				suggestions.forEach((suggestion, index) => {
+					const li = document.createElement('li');
+					li.textContent = suggestion.text;
+					li.style.animationDelay = `${index * 0.1}s`;
+					li.title = `Suggested on ${new Date(suggestion.timestamp).toLocaleDateString()}`;
+					list.appendChild(li);
+				});
+			}
+
+			function addSuggestion(text) {
+				const trimmed = text.trim();
+				if (!trimmed) return;
+
+				const suggestion = {
+					text: trimmed,
+					timestamp: Date.now()
+				};
+
+				suggestions.unshift(suggestion);
+
+				if (suggestions.length > 10) {
+					suggestions = suggestions.slice(0, 10);
+				}
+
+				saveSuggestions();
+				renderSuggestions();
+			}
+
+			loadSuggestions();
+			renderSuggestions();
+
+			form.addEventListener('submit', (e) => {
+				e.preventDefault();
+				const value = input.value.trim();
+				
+				if (value) {
+					addSuggestion(value);
+					input.value = '';
+					autoResize();
+				}
+			});
+
+			input.addEventListener('keydown', (e) => {
+				if (e.key === 'Enter' && !e.shiftKey) {
+					e.preventDefault();
+					form.dispatchEvent(new Event('submit'));
+				}
+			});
+		}
+		initSuggestionsSystem();
+	});
+</script>
+
+<style>
+	.homepage-contact {
+		border-top: 1px solid var(--gray-800);
+		border-bottom: 1px solid var(--gray-800);
+		background: var(--bg-override, var(--gray-999_40));
+		padding: 4rem 1.5rem;
+		box-shadow: var(--shadow-sm);
+	}
+
+	.contact-content {
+		max-width: 80rem;
+		margin: 0 auto;
+		display: flex;
+		flex-direction: column;
+		gap: 3rem;
+		padding: 0 2rem;
+	}
+
+	.email-actions h2 {
+		font-size: var(--text-3xl);
+		color: var(--gray-0);
+		margin: 0 0 2.5rem;
+		text-align: center;
+		font-weight: 700;
+		letter-spacing: -0.025em;
+	}
+
+	.email-buttons {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+		gap: 1.5rem;
+	}
+
+	.email-btn {
+		display: flex;
+		align-items: center;
+		gap: 1rem;
+		padding: 1rem 1.5rem;
+		background: var(--gray-900);
+		border: 1px solid var(--gray-800);
+		border-radius: 0.5rem;
+		text-decoration: none;
+		transition: all 0.2s ease;
+		color: var(--gray-100);
+	}
+
+	.email-btn:hover,
+	.email-btn:focus {
+		background: var(--gray-800);
+		border-color: var(--accent-regular);
+		color: var(--gray-0);
+		transform: translateY(-2px);
+		box-shadow: var(--shadow-md);
+	}
+
+	.email-info {
+		display: flex;
+		flex-direction: column;
+		gap: 0.25rem;
+		flex: 1;
+	}
+
+	.email-label {
+		font-weight: 600;
+		font-size: var(--text-sm);
+		color: var(--accent-light);
+	}
+
+	.email-address {
+		font-family: var(--font-mono);
+		font-size: var(--text-xs);
+		color: var(--gray-300);
+		word-break: break-all;
+	}
+
+	.suggestions-section {
+		background: var(--gray-900_60);
+		border: 1px solid var(--gray-700);
+		border-radius: 1rem;
+		padding: 2.5rem;
+		box-shadow: var(--shadow-md);
+		backdrop-filter: blur(10px);
+	}
+
+	.suggestions-section h3 {
+		font-size: var(--text-xl);
+		color: var(--gray-100);
+		margin: 0 0 2rem;
+		text-align: center;
+		font-weight: 600;
+		letter-spacing: -0.015em;
+	}
+
+	.suggestions-container {
+		display: flex;
+		flex-direction: column;
+		gap: 1.5rem;
+	}
+
+	.suggestion-form {
+		display: flex;
+		gap: 0.75rem;
+		align-items: flex-end;
+		background: var(--gray-900);
+		border: 2px solid var(--gray-700);
+		border-radius: 0.5rem;
+		padding: 0.75rem;
+		transition: border-color 0.3s ease;
+	}
+
+	.suggestion-form:focus-within {
+		border-color: var(--accent-regular);
+		box-shadow: 0 0 0 3px var(--accent-regular_20);
+	}
+
+	.terminal-prompt {
+		font-family: var(--font-mono);
+		font-size: var(--text-sm);
+		color: var(--accent-light);
+		font-weight: bold;
+		line-height: 1.5;
+		padding: 0.5rem 0;
+		flex-shrink: 0;
+	}
+
+	.suggestion-input {
+		flex: 1;
+		padding: 0.5rem 0;
+		min-height: 2.5rem;
+		max-height: 8rem;
+		resize: none;
+		overflow-y: auto;
+		background: transparent;
+		border: none;
+		color: var(--gray-100);
+		font-size: var(--text-sm);
+		font-family: var(--font-mono);
+		line-height: 1.5;
+		outline: none;
+	}
+
+	.suggestion-input::placeholder {
+		color: var(--gray-500);
+		font-style: italic;
+	}
+
+	.suggestion-submit {
+		padding: 0.75rem;
+		min-width: 2.5rem;
+		height: 2.5rem;
+		background: var(--accent-regular);
+		border: none;
+		border-radius: 0.25rem;
+		color: var(--gray-0);
+		cursor: pointer;
+		transition: all 0.3s ease;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		flex-shrink: 0;
+	}
+
+	.suggestion-submit:hover {
+		background: var(--accent-light);
+		transform: translateY(-1px);
+	}
+
+	.suggestions-header {
+		font-family: var(--font-mono);
+		font-size: var(--text-xs);
+		color: var(--gray-400);
+		margin-bottom: 1rem;
+		text-transform: uppercase;
+		letter-spacing: 0.05em;
+	}
+
+	.suggestions-list {
+		list-style: none;
+		padding: 0;
+		margin: 0;
+		display: flex;
+		flex-direction: column;
+		gap: 0.5rem;
+		max-height: 12rem;
+		overflow-y: auto;
+	}
+
+	.suggestions-list li {
+		display: flex;
+		align-items: flex-start;
+		gap: 0.5rem;
+		padding: 0.75rem 0;
+		border-bottom: 1px solid var(--gray-800);
+		font-size: var(--text-sm);
+		color: var(--gray-200);
+		animation: slideIn 0.4s ease;
+		line-height: 1.4;
+		font-family: var(--font-mono);
+	}
+
+	.suggestions-list li:last-child {
+		border-bottom: none;
+	}
+
+	.suggestions-list li::before {
+		content: '>';
+		color: var(--accent-light);
+		font-weight: bold;
+		flex-shrink: 0;
+		margin-top: 0.1em;
+	}
+
+	@keyframes slideIn {
+		from {
+			opacity: 0;
+			transform: translateY(-15px) scale(0.95);
+		}
+		to {
+			opacity: 1;
+			transform: translateY(0) scale(1);
+		}
+	}
+
+	@media (min-width: 50em) {
+		.homepage-contact {
+			padding: 6rem 2rem;
+		}
+
+		.contact-content {
+			flex-direction: row;
+			gap: 4rem;
+			align-items: start;
+		}
+
+		.email-actions {
+			flex: 2;
+		}
+
+		.email-actions h2 {
+			font-size: var(--text-4xl);
+			text-align: left;
+			margin-bottom: 3rem;
+		}
+
+		.email-buttons {
+			grid-template-columns: 1fr;
+			gap: 1.5rem;
+		}
+
+		.email-btn {
+			padding: 2rem 2.5rem;
+			gap: 2rem;
+		}
+
+		.suggestions-section {
+			flex: 1;
+			padding: 3rem;
+		}
+
+		.suggestions-section h3 {
+			text-align: left;
+			font-size: var(--text-lg);
+			margin-bottom: 1.5rem;
+		}
+
+		.suggestions-container {
+			flex-direction: row;
+			gap: 2rem;
+			align-items: flex-start;
+		}
+
+		.suggestions-input-area {
+			flex: 0 0 20rem;
+		}
+
+		.suggestions-output {
+			flex: 1;
+			min-width: 0;
+		}
+	}
+
+	@media (min-width: 75em) {
+		.contact-content {
+			flex-direction: column;
+			gap: 4rem;
+		}
+
+		.email-actions {
+			flex: none;
+			margin-bottom: 2rem;
+		}
+
+		.email-buttons {
+			grid-template-columns: repeat(3, 1fr);
+			gap: 2rem;
+		}
+
+		.email-btn {
+			flex-direction: column;
+			text-align: center;
+			padding: 2.5rem 2rem;
+			gap: 1.5rem;
+			min-height: 12rem;
+		}
+
+		.email-info {
+			align-items: center;
+			gap: 0.75rem;
+		}
+
+		.suggestions-section {
+			flex: none;
+			max-width: 50rem;
+			margin: 0 auto;
+		}
+	}
+</style>

@@ -1,0 +1,230 @@
+---
+import VisualCodeLayout from '../../layouts/VisualCodeLayout.astro';
+import { getRegistryBlogs, getBlogById } from '../../data/blogRegistry.ts';
+import { getRegistryProjects } from '../../data/projectRegistry.ts';
+
+interface Props {
+	blogId: string;
+}
+
+export async function getStaticPaths() {
+	const blogs = getRegistryBlogs();
+	return blogs.map((blog) => ({
+		params: { slug: blog.id },
+		props: { blogId: blog.id }
+	}));
+}
+
+const { blogId } = Astro.props;
+const blog = getBlogById(blogId);
+
+if (!blog) {
+	return Astro.redirect('/404');
+}
+
+// Placeholder similar content
+const similarProjects = getRegistryProjects().slice(0, 3);
+const similarBlogs = getRegistryBlogs().filter(b => b.id !== blog.id).slice(0, 3);
+---
+
+<VisualCodeLayout 
+	title={blog.title}
+	description={blog.description}
+	publishDate={blog.publishDate}
+	similarProjects={similarProjects}
+	similarBlogs={similarBlogs}
+	additionalInfo={{
+		author: blog.author,
+		readTime: blog.readTime,
+		category: blog.category,
+		tags: blog.tags
+	}}
+>
+	<article class="blog-article">
+		<header class="article-header">
+			<div class="article-meta">
+				{blog.category && (
+					<span class="article-category">{blog.category.toUpperCase()}</span>
+				)}
+				<div class="article-info">
+					{blog.author && <span class="article-author">By {blog.author}</span>}
+					{blog.readTime && <span class="article-read-time">{blog.readTime}</span>}
+				</div>
+			</div>
+			
+			<h1 class="article-title">{blog.title}</h1>
+			
+			<div class="article-featured-image">
+				<img 
+					src={blog.featuredImage} 
+					alt={blog.featuredImageAlt}
+					loading="eager"
+				/>
+			</div>
+		</header>
+
+		<div class="article-content">
+			<div class="article-intro">
+				<p class="lead">{blog.description}</p>
+			</div>
+
+			<div class="article-body">
+				<p>This is a placeholder for the full blog article content. In a real implementation, this would be populated from markdown content or a content management system.</p>
+				
+				<h2>Sample Section</h2>
+				<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris.</p>
+				
+				<h3>Subsection Example</h3>
+				<p>Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
+				
+				<blockquote>
+					<p>"This is an example quote that would appear in the blog post. It provides emphasis and visual variety to the content."</p>
+				</blockquote>
+				
+				<p>More content would continue here, potentially including code blocks, images, and other rich media elements depending on the blog topic.</p>
+			</div>
+		</div>
+	</article>
+</VisualCodeLayout>
+
+<style>
+	.blog-article {
+		max-width: none;
+		font-family: var(--font-body);
+	}
+
+	.article-header {
+		margin-bottom: 3rem;
+		border-bottom: 1px solid var(--gray-800);
+		padding-bottom: 2rem;
+	}
+
+	.article-meta {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		margin-bottom: 1.5rem;
+		flex-wrap: wrap;
+		gap: 1rem;
+	}
+
+	.article-category {
+		font-size: var(--text-xs);
+		font-weight: 700;
+		color: var(--accent-light);
+		letter-spacing: 0.1em;
+		font-family: var(--font-mono);
+	}
+
+	.article-info {
+		display: flex;
+		gap: 1rem;
+		font-size: var(--text-sm);
+		color: var(--gray-400);
+		font-family: var(--font-mono);
+	}
+
+	.article-author {
+		color: var(--gray-300);
+	}
+
+	.article-read-time {
+		color: var(--gray-500);
+	}
+
+	.article-title {
+		font-size: var(--text-3xl);
+		color: var(--gray-0);
+		margin: 0 0 2rem;
+		font-weight: 700;
+		line-height: 1.2;
+		letter-spacing: -0.02em;
+	}
+
+	.article-featured-image {
+		width: 100%;
+		height: 300px;
+		overflow: hidden;
+		border-radius: 0.5rem;
+		background: var(--gray-900);
+	}
+
+	.article-featured-image img {
+		width: 100%;
+		height: 100%;
+		object-fit: cover;
+	}
+
+	.article-content {
+		line-height: 1.7;
+	}
+
+	.article-intro {
+		margin-bottom: 2.5rem;
+		padding: 1.5rem;
+		background: var(--gray-999_60);
+		border-left: 4px solid var(--accent-regular);
+		border-radius: 0 0.5rem 0.5rem 0;
+	}
+
+	.lead {
+		font-size: var(--text-lg);
+		color: var(--gray-200);
+		margin: 0;
+		font-weight: 500;
+		line-height: 1.6;
+	}
+
+	.article-body {
+		color: var(--gray-300);
+		font-size: var(--text-base);
+	}
+
+	.article-body h2 {
+		font-size: var(--text-xl);
+		color: var(--gray-100);
+		margin: 2.5rem 0 1rem;
+		font-weight: 600;
+	}
+
+	.article-body h3 {
+		font-size: var(--text-lg);
+		color: var(--gray-200);
+		margin: 2rem 0 0.75rem;
+		font-weight: 600;
+	}
+
+	.article-body p {
+		margin: 1rem 0;
+	}
+
+	.article-body blockquote {
+		margin: 2rem 0;
+		padding: 1.5rem;
+		background: var(--gray-900_60);
+		border-left: 4px solid var(--accent-regular);
+		border-radius: 0 0.5rem 0.5rem 0;
+		font-style: italic;
+		color: var(--gray-200);
+	}
+
+	.article-body blockquote p {
+		margin: 0;
+		font-size: var(--text-lg);
+	}
+
+	@media (max-width: 50em) {
+		.article-meta {
+			flex-direction: column;
+			align-items: flex-start;
+		}
+
+		.article-title {
+			font-size: var(--text-2xl);
+		}
+
+		.article-featured-image {
+			height: 250px;
+		}
+	}
+</style>

@@ -1,0 +1,909 @@
+---
+// Background Generator UI Component
+// Visual-only controls for determinant-based background generation
+---
+
+<div class="bg-generator-wrapper">
+	<div class="bg-info-panel" hidden>
+		<p class="info-text">
+			Backgrounds are formed by a linear algebra visualizer for matrices with maximized determinants. Feel free to mess around with it!
+		</p>
+	</div>
+	
+	<button class="bg-generator-toggle" aria-label="Toggle background generator" aria-expanded="false">
+		<span class="toggle-icon">⚙</span>
+		<span class="toggle-text" data-type-speed="35" data-type-delay="4800">Customize</span>
+		<span class="info-preview">Linear Algebra...</span>
+		<button class="info-trigger" aria-label="About backgrounds" type="button">ℹ</button>
+	</button>
+
+	<div class="bg-generator-overlay" hidden>
+	<div class="bg-generator-panel">
+		<div class="panel-header">
+			<h3 class="panel-title">Background</h3>
+			<button class="panel-close" aria-label="Close panel">×</button>
+		</div>
+
+		<div class="panel-content">
+			<!-- Color Hue -->
+			<div class="control-group compact">
+				<label class="control-label">Hue</label>
+				<select class="control-select compact">
+					<option value="purple">Purple</option>
+					<option value="gray">Gray</option>
+					<option value="blue">Blue</option>
+					<option value="teal">Teal</option>
+					<option value="pink">Pink</option>
+					<option value="red">Red</option>
+					<option value="orange">Orange</option>
+					<option value="yellow">Yellow</option>
+					<option value="green">Green</option>
+				</select>
+			</div>
+
+			<!-- Pattern Mode -->
+			<div class="control-group compact">
+				<label class="control-label">Pattern</label>
+				<div class="segmented-control compact">
+					<button class="segment active" data-value="mixed">Mixed</button>
+					<button class="segment" data-value="uniform">Uniform</button>
+					<button class="segment" data-value="gradient">Gradient</button>
+				</div>
+			</div>
+
+			<!-- Toggles - Compact Layout -->
+			<div class="control-group toggles">
+				<div class="toggle-row compact">
+					<label class="toggle-label">
+						<input type="checkbox" class="toggle-input" data-control="det-brightness" checked />
+						<span class="toggle-switch"></span>
+						<span class="toggle-text">Det brightness</span>
+					</label>
+				</div>
+
+				<div class="toggle-row compact">
+					<label class="toggle-label">
+						<input type="checkbox" class="toggle-input" data-control="use-max" checked />
+						<span class="toggle-switch"></span>
+						<span class="toggle-text">Use max</span>
+					</label>
+				</div>
+
+				<div class="toggle-row compact">
+					<label class="toggle-label">
+						<input type="checkbox" class="toggle-input" data-control="feathered" checked />
+						<span class="toggle-switch"></span>
+						<span class="toggle-text">Feathered</span>
+					</label>
+				</div>
+			</div>
+
+			<!-- Mathematical Controls -->
+			<div class="control-group compact">
+				<label class="control-label">
+					Cell Size <span class="control-value">12</span>
+				</label>
+				<input type="range" class="control-slider" data-control="cell-size" min="8" max="20" step="2" value="12" />
+			</div>
+
+			<div class="control-group compact">
+				<label class="control-label">
+					Matrix Size <span class="control-value">4</span>
+				</label>
+				<input type="range" class="control-slider" data-control="matrix-size" min="2" max="4" step="1" value="4" />
+			</div>
+
+			<div class="control-group compact">
+				<label class="control-label">
+					Normalizer <span class="control-value">0.5</span>
+				</label>
+				<input type="range" class="control-slider" data-control="normalizer" min="0.3" max="0.7" step="0.05" value="0.5" />
+			</div>
+
+			<div class="control-group compact">
+				<label class="control-label">
+					Brightness Low <span class="control-value">0</span>
+				</label>
+				<input type="range" class="control-slider" data-control="brightness-low" min="0" max="0.3" step="0.05" value="0" />
+			</div>
+
+			<div class="control-group compact">
+				<label class="control-label">
+					Brightness High <span class="control-value">1</span>
+				</label>
+				<input type="range" class="control-slider" data-control="brightness-high" min="0.7" max="1" step="0.05" value="1" />
+			</div>
+
+			<!-- Visual Effects -->
+			<div class="control-group compact">
+				<label class="control-label">
+					Blur <span class="control-value">1.5</span>
+				</label>
+				<input type="range" class="control-slider" data-control="blur" min="0" max="5" step="0.5" value="1.5" />
+			</div>
+
+			<div class="control-group compact">
+				<label class="control-label">
+					Vignette <span class="control-value">0.3</span>
+				</label>
+				<input type="range" class="control-slider" data-control="vignette" min="0" max="1" step="0.1" value="0.3" />
+			</div>
+
+			<div class="control-group compact">
+				<label class="control-label">
+					Gap <span class="control-value">1</span>
+				</label>
+				<input type="range" class="control-slider" data-control="gap" min="0" max="4" step="1" value="1" />
+			</div>
+		</div>
+
+		<div class="panel-footer">
+			<button class="action-button secondary">Reset</button>
+			<button class="action-button primary">Apply</button>
+		</div>
+	</div>
+	</div>
+</div>
+
+<script>
+	import { updateState, generateBackground, resetState, getState, isLoading, DEFAULT_CONFIG } from '../scripts/backgroundState';
+
+	function initBackgroundGenerator() {
+		const wrapper = document.querySelector('.bg-generator-wrapper');
+		if (!wrapper) return;
+
+		const toggleBtn = wrapper.querySelector('.bg-generator-toggle') as HTMLButtonElement;
+		const overlay = wrapper.querySelector('.bg-generator-overlay') as HTMLElement;
+		const panel = wrapper.querySelector('.bg-generator-panel') as HTMLElement;
+		const closeBtn = wrapper.querySelector('.panel-close') as HTMLButtonElement;
+		const generateBtn = panel.querySelector('.action-button.primary') as HTMLButtonElement;
+		const resetBtn = panel.querySelector('.action-button.secondary') as HTMLButtonElement;
+		
+		// Info panel elements
+		const infoPanel = wrapper.querySelector('.bg-info-panel') as HTMLElement;
+		const infoTrigger = wrapper.querySelector('.info-trigger') as HTMLButtonElement;
+		const infoClose = infoPanel?.querySelector('.info-close') as HTMLButtonElement;
+
+		// Get all controls
+		const hueSelect = panel.querySelector('.control-select') as HTMLSelectElement;
+		const patternSegments = panel.querySelectorAll('.segmented-control .segment');
+		const detBrightnessToggle = panel.querySelector('[data-control="det-brightness"]') as HTMLInputElement;
+		const useMaxToggle = panel.querySelector('[data-control="use-max"]') as HTMLInputElement;
+		const featheredToggle = panel.querySelector('[data-control="feathered"]') as HTMLInputElement;
+		const cellSizeSlider = panel.querySelector('[data-control="cell-size"]') as HTMLInputElement;
+		const matrixSizeSlider = panel.querySelector('[data-control="matrix-size"]') as HTMLInputElement;
+		const normalizerSlider = panel.querySelector('[data-control="normalizer"]') as HTMLInputElement;
+		const brightnessLowSlider = panel.querySelector('[data-control="brightness-low"]') as HTMLInputElement;
+		const brightnessHighSlider = panel.querySelector('[data-control="brightness-high"]') as HTMLInputElement;
+		const blurSlider = panel.querySelector('[data-control="blur"]') as HTMLInputElement;
+		const vignetteSlider = panel.querySelector('[data-control="vignette"]') as HTMLInputElement;
+		const gapSlider = panel.querySelector('[data-control="gap"]') as HTMLInputElement;
+
+		/**
+		 * Sync UI controls with current persisted state
+		 */
+		function syncUIWithState() {
+			const state = getState();
+			console.log('\ud83d\udd04 Syncing UI with persisted state:', state);
+			
+			// Update select
+			hueSelect.value = state.hue;
+			
+			// Update pattern
+			patternSegments.forEach(s => s.classList.remove('active'));
+			const activePattern = Array.from(patternSegments).find(
+				s => (s as HTMLElement).dataset.value === state.pattern
+			);
+			if (activePattern) {
+				activePattern.classList.add('active');
+			}
+			
+			// Update toggles
+			detBrightnessToggle.checked = state.use_determinant;
+			useMaxToggle.checked = state.use_max;
+			featheredToggle.checked = state.feathered;
+			
+			// Update sliders
+			cellSizeSlider.value = String(state.cell_size);
+			matrixSizeSlider.value = String(state.matrix_size);
+			normalizerSlider.value = String(state.normalizer);
+			brightnessLowSlider.value = String(state.brightness_low);
+			brightnessHighSlider.value = String(state.brightness_high);
+			blurSlider.value = String(state.blur_sigma);
+			vignetteSlider.value = String(state.vignette_strength);
+			gapSlider.value = String(state.gap_cells);
+			
+			// Update slider displays
+			const sliders = panel.querySelectorAll('.control-slider');
+			sliders.forEach(slider => {
+				const input = slider as HTMLInputElement;
+				const label = input.closest('.control-group')?.querySelector('.control-value');
+				if (label) label.textContent = input.value;
+			});
+		}
+
+		function openPanel() {
+			// Sync UI with current state before showing panel
+			syncUIWithState();
+			
+			overlay.hidden = false;
+			toggleBtn.setAttribute('aria-expanded', 'true');
+			overlay.offsetHeight;
+			overlay.classList.add('open');
+		}
+
+		function closePanel() {
+			overlay.classList.remove('open');
+			toggleBtn.setAttribute('aria-expanded', 'false');
+			setTimeout(() => {
+				if (!overlay.classList.contains('open')) {
+					overlay.hidden = true;
+				}
+			}, 300);
+		}
+
+		// Info panel handlers
+		function toggleInfo(e: Event) {
+			e.stopPropagation();
+			e.preventDefault();
+			if (infoPanel) {
+				infoPanel.hidden = !infoPanel.hidden;
+			}
+		}
+
+		function closeInfo() {
+			if (infoPanel) {
+				infoPanel.hidden = true;
+			}
+		}
+
+		toggleBtn.addEventListener('click', (e) => {
+			// Check if click is on info trigger
+			if ((e.target as HTMLElement).closest('.info-trigger')) {
+				return; // Let info trigger handle it
+			}
+			closeInfo(); // Close info if open
+			if (overlay.classList.contains('open')) {
+				closePanel();
+			} else {
+				openPanel();
+			}
+		});
+
+		if (infoTrigger) {
+			infoTrigger.addEventListener('click', toggleInfo);
+		}
+
+		// Close info panel when clicking outside
+		document.addEventListener('click', (e) => {
+			if (infoPanel && !infoPanel.hidden) {
+				if (!infoPanel.contains(e.target as Node) && !infoTrigger.contains(e.target as Node)) {
+					closeInfo();
+				}
+			}
+		});
+
+		// Close customize panel when clicking outside
+		overlay.addEventListener('click', (e) => {
+			if (e.target === overlay) {
+				closePanel();
+			}
+		})
+
+		closeBtn.addEventListener('click', closePanel);
+
+		// Update slider value displays
+		const sliders = panel.querySelectorAll('.control-slider');
+		sliders.forEach(slider => {
+			const input = slider as HTMLInputElement;
+			const label = input.closest('.control-group')?.querySelector('.control-value');
+			if (label) {
+				input.addEventListener('input', () => {
+					label.textContent = input.value;
+				});
+			}
+		});
+
+		// Segmented control
+		patternSegments.forEach(segment => {
+			segment.addEventListener('click', () => {
+				patternSegments.forEach(s => s.classList.remove('active'));
+				segment.classList.add('active');
+			});
+		});
+
+		// Generate button - collect state and trigger generation
+		generateBtn.addEventListener('click', async () => {
+			if (isLoading()) {
+				console.log('⏳ Already generating...');
+				return;
+			}
+
+			console.log('🎨 Generate button clicked');
+
+			// Collect current UI state
+			const activePattern = panel.querySelector('.segment.active') as HTMLElement;
+			const config = {
+				hue: hueSelect.value,
+				pattern: activePattern?.dataset.value as 'mixed' | 'uniform' | 'gradient' || 'mixed',
+				use_determinant: detBrightnessToggle.checked,
+				use_max: useMaxToggle.checked,
+				feathered: featheredToggle.checked,
+				cell_size: parseInt(cellSizeSlider.value),
+				matrix_size: parseInt(matrixSizeSlider.value),
+				normalizer: parseFloat(normalizerSlider.value),
+				brightness_low: parseFloat(brightnessLowSlider.value),
+				brightness_high: parseFloat(brightnessHighSlider.value),
+				blur_sigma: parseFloat(blurSlider.value),
+				vignette_strength: parseFloat(vignetteSlider.value),
+				gap_cells: parseInt(gapSlider.value)
+			};
+
+			console.log('📊 Collected config from UI:', config);
+
+			// Update state
+			updateState(config);
+
+			// Close panel immediately for decisive action
+			closePanel();
+
+			// Show loading state on button (even though panel is closed)
+			generateBtn.textContent = 'Generating...';
+			generateBtn.disabled = true;
+
+			try {
+				// Generate background
+				await generateBackground();
+				console.log('✅ Background generated successfully');
+			} catch (error) {
+				console.error('❌ Generation failed:', error);
+				alert('Failed to generate background. Make sure the API server is running.');
+			} finally {
+				// Reset button state
+				generateBtn.textContent = 'Apply';
+				generateBtn.disabled = false;
+			}
+		});
+
+		// Reset button - uses DEFAULT_CONFIG as single source of truth
+		resetBtn.addEventListener('click', () => {
+			console.log('\ud83d\udd04 Reset button clicked');
+			resetState();
+			
+			// Sync UI with the reset state (which uses DEFAULT_CONFIG)
+			syncUIWithState();
+		});
+	}
+
+	// Initialize on DOM ready
+	if (document.readyState === 'loading') {
+		document.addEventListener('DOMContentLoaded', initBackgroundGenerator);
+	} else {
+		initBackgroundGenerator();
+	}
+</script>
+
+<style>
+	.bg-generator-wrapper {
+		position: absolute;
+		top: auto;
+		bottom: 0;
+		right: 2rem;
+		z-index: 1000;
+	}
+
+	/* Info Panel */
+	.bg-info-panel {
+		position: absolute;
+		bottom: calc(100% + 0.5rem);
+		right: 0;
+		width: 240px;
+		padding: 0.75rem;
+		background: color-mix(in srgb, var(--gray-999) 92%, var(--gray-0) 8%);
+		border: 1px solid color-mix(in srgb, var(--gray-999) 80%, var(--gray-400) 20%);
+		border-radius: 6px;
+		box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+		backdrop-filter: blur(8px);
+		opacity: 0;
+		transform: translateY(4px);
+		transition: opacity 0.15s ease, transform 0.15s ease;
+		pointer-events: none;
+		z-index: 1001;
+	}
+
+	.bg-info-panel:not([hidden]) {
+		opacity: 1;
+		transform: translateY(0);
+		pointer-events: auto;
+	}
+
+	:global(.theme-dark) .bg-info-panel {
+		background: color-mix(in srgb, var(--gray-0) 92%, var(--gray-999) 8%);
+		border-color: color-mix(in srgb, var(--gray-0) 80%, var(--gray-600) 20%);
+		box-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
+	}
+
+	.info-text {
+		margin: 0;
+		font-size: 0.75rem;
+		line-height: 1.4;
+		color: var(--gray-300);
+		font-family: var(--font-system);
+	}
+
+	:global(.theme-dark) .info-text {
+		color: var(--gray-700);
+	}
+
+	.info-preview {
+		position: absolute;
+		top: -1.5rem;
+		left: 0;
+		font-size: 0.65rem;
+		color: var(--gray-400);
+		opacity: 0.6;
+		font-style: italic;
+		pointer-events: none;
+	}
+
+	/* Toggle Button */
+	.bg-generator-toggle {
+		position: relative;
+		display: inline-flex;
+		align-items: center;
+		gap: 0.375rem;
+		padding: 0.5rem 2.5rem 0.5rem 1rem;
+		background: color-mix(in srgb, var(--gray-999) 95%, var(--gray-200) 5%);
+		border: 1px solid color-mix(in srgb, var(--gray-999) 90%, var(--gray-400) 10%);
+		border-radius: 6px;
+		color: var(--gray-400);
+		font-size: var(--text-xs);
+		font-family: var(--font-system);
+		font-weight: 500;
+		cursor: pointer;
+		transition: all 0.2s ease;
+		backdrop-filter: blur(8px);
+		opacity: 0.7;
+	}
+
+	.info-trigger {
+		position: absolute;
+		top: 0;
+		right: 0;
+		width: 1.75rem;
+		height: 100%;
+		padding: 0;
+		background: transparent;
+		border: none;
+		border-left: 1px solid color-mix(in srgb, var(--gray-999) 85%, var(--gray-400) 15%);
+		color: var(--gray-400);
+		font-size: var(--text-xs);
+		cursor: pointer;
+		opacity: 0.5;
+		transition: all 0.2s ease;
+		border-radius: 0 6px 6px 0;
+	}
+
+	.info-trigger:hover {
+		opacity: 1;
+		background: color-mix(in srgb, var(--gray-999) 90%, var(--gray-400) 10%);
+	}
+
+	.bg-generator-toggle:hover {
+		background: color-mix(in srgb, var(--gray-999) 90%, var(--gray-200) 10%);
+		border-color: color-mix(in srgb, var(--gray-999) 80%, var(--gray-400) 20%);
+		color: var(--gray-200);
+		box-shadow: var(--shadow-sm);
+		opacity: 1;
+	}
+
+	.toggle-icon {
+		font-size: 1em;
+		opacity: 0.7;
+	}
+
+	.toggle-text {
+		letter-spacing: 0.02em;
+		text-transform: uppercase;
+		font-size: 0.7rem;
+	}
+
+	/* Overlay */
+	.bg-generator-overlay {
+		position: fixed;
+		top: 0;
+		left: 0;
+		right: 0;
+		bottom: 0;
+		z-index: 10000;
+		background: color-mix(in srgb, var(--gray-999) 40%, transparent);
+		display: flex;
+		align-items: flex-start;
+		justify-content: flex-end;
+		padding: 2rem;
+		opacity: 0;
+		transition: opacity 0.25s ease;
+		backdrop-filter: blur(4px);
+		pointer-events: none;
+	}
+
+	:global(.theme-dark) .bg-generator-overlay {
+		background: color-mix(in srgb, var(--gray-0) 60%, transparent);
+	}
+
+	.bg-generator-overlay.open {
+		opacity: 1;
+		pointer-events: auto;
+	}
+
+	/* Panel */
+	.bg-generator-panel {
+		position: absolute;
+		bottom: 3.5rem;
+		right: 0;
+		width: 320px;
+		background: color-mix(in srgb, var(--gray-999) 98%, var(--gray-800));
+		border: 1px solid color-mix(in srgb, var(--gray-999) 85%, var(--gray-400) 15%);
+		border-radius: 10px;
+		padding: 1rem;
+		backdrop-filter: blur(20px);
+		box-shadow: var(--shadow-lg);
+		transform: translateY(10px) scale(0.96);
+		opacity: 0;
+		transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+		            opacity 0.25s ease;
+		max-height: 70vh;
+		overflow-y: auto;
+	}
+
+	.bg-generator-overlay.open .bg-generator-panel {
+		transform: translateY(0) scale(1);
+		opacity: 1;
+	}
+
+	/* Panel Header */
+	.panel-header {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		margin-bottom: 1rem;
+		padding-bottom: 0.75rem;
+		border-bottom: 1px solid color-mix(in srgb, var(--gray-999) 92%, var(--gray-400) 8%);
+	}
+
+	.panel-title {
+		margin: 0;
+		font-size: var(--text-base);
+		font-weight: 600;
+		color: var(--gray-0);
+		letter-spacing: -0.01em;
+	}
+
+	.panel-close {
+		background: transparent;
+		border: none;
+		color: var(--gray-300);
+		font-size: 1.5rem;
+		line-height: 1;
+		cursor: pointer;
+		padding: 0;
+		width: 1.5rem;
+		height: 1.5rem;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		border-radius: 4px;
+		transition: all 0.2s ease;
+	}
+
+	.panel-close:hover {
+		background: color-mix(in srgb, var(--gray-999) 90%, var(--gray-200) 10%);
+		color: var(--gray-0);
+	}
+
+	/* Panel Content */
+	.panel-content {
+		display: flex;
+		flex-direction: column;
+		gap: 0.875rem;
+	}
+
+	.control-group {
+		display: flex;
+		flex-direction: column;
+		gap: 0.5rem;
+	}
+
+	.control-group.compact {
+		gap: 0.375rem;
+	}
+
+	.control-group.toggles {
+		gap: 0.25rem;
+	}
+
+	.control-label {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		font-size: 0.7rem;
+		font-weight: 600;
+		color: var(--gray-200);
+		text-transform: uppercase;
+		letter-spacing: 0.06em;
+		font-family: var(--font-system);
+	}
+
+	.control-value {
+		font-family: var(--font-mono, monospace);
+		font-size: 0.65rem;
+		color: var(--accent-regular);
+		background: color-mix(in srgb, var(--gray-999) 92%, var(--accent-regular) 8%);
+		padding: 0.125rem 0.375rem;
+		border-radius: 3px;
+		min-width: 2.5ch;
+		text-align: center;
+	}
+
+	/* Segmented Control */
+	.segmented-control {
+		display: flex;
+		gap: 0.25rem;
+		background: color-mix(in srgb, var(--gray-999) 80%, var(--gray-800) 20%);
+		padding: 0.25rem;
+		border-radius: 6px;
+		border: 1px solid color-mix(in srgb, var(--gray-999) 92%, var(--gray-400) 8%);
+	}
+
+	.segmented-control.compact {
+		padding: 0.2rem;
+	}
+
+	.segment {
+		flex: 1;
+		padding: 0.4rem 0.5rem;
+		background: transparent;
+		border: none;
+		border-radius: 4px;
+		color: var(--gray-300);
+		font-size: 0.7rem;
+		font-weight: 500;
+		cursor: pointer;
+		transition: all 0.2s ease;
+	}
+
+	.segment:hover {
+		background: color-mix(in srgb, var(--gray-999) 85%, var(--gray-200) 15%);
+		color: var(--gray-0);
+	}
+
+	.segment.active {
+		background: color-mix(in srgb, var(--gray-999) 75%, var(--gray-200) 25%);
+		color: var(--gray-0);
+		box-shadow: var(--shadow-sm);
+	}
+
+	/* Select Dropdown */
+	.control-select {
+		padding: 0.5rem 0.75rem;
+		background: color-mix(in srgb, var(--gray-999) 75%, var(--gray-800) 25%);
+		border: 1px solid color-mix(in srgb, var(--gray-999) 85%, var(--gray-400) 15%);
+		border-radius: 6px;
+		color: var(--gray-0);
+		font-size: 0.75rem;
+		font-family: var(--font-system);
+		cursor: pointer;
+		transition: all 0.2s ease;
+	}
+
+	.control-select.compact {
+		padding: 0.4rem 0.6rem;
+		font-size: 0.7rem;
+	}
+
+	.control-select:hover {
+		background: color-mix(in srgb, var(--gray-999) 70%, var(--gray-800) 30%);
+		border-color: color-mix(in srgb, var(--gray-999) 80%, var(--gray-400) 20%);
+	}
+
+	.control-select:focus {
+		outline: none;
+		border-color: var(--accent-regular);
+		box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent-regular) 20%, transparent);
+	}
+
+	/* Toggle Switches */
+	.toggle-row {
+		padding: 0.375rem 0;
+	}
+
+	.toggle-row.compact {
+		padding: 0.25rem 0;
+	}
+
+	.toggle-label {
+		display: flex;
+		align-items: center;
+		gap: 0.75rem;
+		cursor: pointer;
+		user-select: none;
+	}
+
+	.toggle-input {
+		position: absolute;
+		opacity: 0;
+		width: 0;
+		height: 0;
+	}
+
+	.toggle-switch {
+		position: relative;
+		width: 2rem;
+		height: 1rem;
+		background: color-mix(in srgb, var(--gray-999) 85%, var(--gray-400) 15%);
+		border-radius: 1rem;
+		transition: background 0.2s ease;
+		flex-shrink: 0;
+	}
+
+	.toggle-switch::after {
+		content: '';
+		position: absolute;
+		top: 0.125rem;
+		left: 0.125rem;
+		width: 0.75rem;
+		height: 0.75rem;
+		background: var(--gray-0);
+		border-radius: 50%;
+		transition: transform 0.2s ease;
+		box-shadow: var(--shadow-sm);
+	}
+
+	:global(.theme-dark) .toggle-switch::after {
+		background: var(--gray-999);
+	}
+
+	.toggle-input:checked + .toggle-switch {
+		background: var(--accent-regular);
+	}
+
+	.toggle-input:checked + .toggle-switch::after {
+		transform: translateX(1rem);
+	}
+
+	.toggle-row .toggle-text {
+		font-size: 0.7rem;
+		color: var(--gray-200);
+		font-weight: 400;
+	}
+
+	/* Sliders */
+	.control-slider {
+		width: 100%;
+		height: 4px;
+		background: color-mix(in srgb, var(--gray-999) 85%, var(--gray-400) 15%);
+		border-radius: 2px;
+		outline: none;
+		appearance: none;
+		cursor: pointer;
+	}
+
+	.control-slider::-webkit-slider-thumb {
+		appearance: none;
+		width: 0.875rem;
+		height: 0.875rem;
+		background: var(--accent-regular);
+		border-radius: 50%;
+		cursor: pointer;
+		box-shadow: var(--shadow-sm);
+		transition: all 0.2s ease;
+	}
+
+	.control-slider::-webkit-slider-thumb:hover {
+		transform: scale(1.1);
+		box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent-regular) 20%, transparent);
+	}
+
+	.control-slider::-moz-range-thumb {
+		width: 0.875rem;
+		height: 0.875rem;
+		background: var(--accent-regular);
+		border: none;
+		border-radius: 50%;
+		cursor: pointer;
+		box-shadow: var(--shadow-sm);
+		transition: all 0.2s ease;
+	}
+
+	.control-slider::-moz-range-thumb:hover {
+		transform: scale(1.1);
+		box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent-regular) 20%, transparent);
+	}
+
+	/* Panel Footer */
+	.panel-footer {
+		display: flex;
+		gap: 0.5rem;
+		margin-top: 1rem;
+		padding-top: 1rem;
+		border-top: 1px solid color-mix(in srgb, var(--gray-999) 92%, var(--gray-400) 8%);
+	}
+
+	.action-button {
+		flex: 1;
+		padding: 0.5rem 1rem;
+		border: none;
+		border-radius: 6px;
+		font-size: 0.7rem;
+		font-weight: 600;
+		font-family: var(--font-system);
+		cursor: pointer;
+		transition: all 0.2s ease;
+		letter-spacing: 0.02em;
+		text-transform: uppercase;
+	}
+
+	.action-button.secondary {
+		background: color-mix(in srgb, var(--gray-999) 90%, var(--gray-200) 10%);
+		color: var(--gray-200);
+		border: 1px solid color-mix(in srgb, var(--gray-999) 85%, var(--gray-400) 15%);
+	}
+
+	.action-button.secondary:hover {
+		background: color-mix(in srgb, var(--gray-999) 85%, var(--gray-200) 15%);
+		border-color: color-mix(in srgb, var(--gray-999) 80%, var(--gray-400) 20%);
+		color: var(--gray-0);
+	}
+
+	.action-button.primary {
+		background: var(--accent-regular);
+		color: var(--accent-text-over);
+		box-shadow: var(--shadow-sm);
+	}
+
+	.action-button.primary:hover {
+		background: color-mix(in srgb, var(--accent-regular) 85%, var(--gray-0) 15%);
+		box-shadow: var(--shadow-md);
+		transform: translateY(-1px);
+	}
+
+	:global(.theme-dark) .action-button.primary:hover {
+		background: color-mix(in srgb, var(--accent-regular) 85%, var(--gray-999) 15%);
+	}
+
+	/* Responsive */
+	@media (max-width: 50em) {
+		.bg-generator-wrapper {
+			top: 1rem;
+			right: 1rem;
+		}
+
+		.bg-generator-overlay {
+			padding: 5rem 1rem 1rem 1rem;
+		}
+
+		.bg-generator-panel {
+			max-width: 100%;
+		}
+
+		.segmented-control {
+			flex-wrap: wrap;
+		}
+
+		.segment {
+			min-width: calc(50% - 0.125rem);
+		}
+	}
+
+	/* Reduced motion */
+	@media (prefers-reduced-motion: reduce) {
+		.bg-generator-toggle,
+		.bg-generator-panel,
+		.segment,
+		.control-slider::-webkit-slider-thumb,
+		.control-slider::-moz-range-thumb,
+		.action-button {
+			transition: none;
+		}
+	}
+</style>

@@ -1,0 +1,209 @@
+---
+/**
+ * Linear Algebra Visual Component
+ * 
+ * Custom visual showcasing mathematical matrix operations and transformations.
+ * Connects to the existing background generation system.
+ */
+---
+
+<div class="linear-algebra-visual" id="linear-algebra-visual">
+  <canvas id="matrix-canvas" width="300" height="180"></canvas>
+  <div class="matrix-info">
+    <span class="matrix-label">Matrix Determinant</span>
+    <span class="determinant-value" id="det-value">calculating...</span>
+  </div>
+</div>
+
+<script>
+  interface MatrixCell {
+    value: number;
+    x: number;
+    y: number;
+    targetColor: string;
+    currentColor: string;
+    animProgress: number;
+  }
+
+  function initLinearAlgebraVisual() {
+    const canvas = document.getElementById('matrix-canvas') as HTMLCanvasElement;
+    const detValue = document.getElementById('det-value');
+    if (!canvas || !detValue) return;
+
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    // Check for reduced motion preference
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    const cellSize = 35;
+    const matrixSize = 3;
+    const startX = (canvas.width - (matrixSize * cellSize)) / 2;
+    const startY = (canvas.height - (matrixSize * cellSize)) / 2;
+
+    let matrix: number[][] = [];
+    let cells: MatrixCell[] = [];
+    let animationId: number | null = null;
+
+    function generateMatrix() {
+      matrix = [];
+      cells = [];
+      
+      for (let i = 0; i < matrixSize; i++) {
+        matrix[i] = [];
+        for (let j = 0; j < matrixSize; j++) {
+          const value = Math.floor(Math.random() * 3); // 0, 1, or 2
+          matrix[i][j] = value;
+          
+          // Calculate color based on value
+          const hue = value * 120; // 0=red, 1=green, 2=blue
+          const targetColor = `hsl(${hue}, 70%, 60%)`;
+          
+          cells.push({
+            value,
+            x: startX + j * cellSize,
+            y: startY + i * cellSize,
+            targetColor,
+            currentColor: 'hsl(0, 0%, 20%)',
+            animProgress: 0
+          });
+        }
+      }
+
+      // Calculate determinant for 3x3 matrix
+      const det = matrix[0][0] * (matrix[1][1] * matrix[2][2] - matrix[1][2] * matrix[2][1]) -
+                  matrix[0][1] * (matrix[1][0] * matrix[2][2] - matrix[1][2] * matrix[2][0]) +
+                  matrix[0][2] * (matrix[1][0] * matrix[2][1] - matrix[1][1] * matrix[2][0]);
+      
+      detValue.textContent = det.toString();
+    }
+
+    function interpolateColor(color1: string, color2: string, factor: number): string {
+      // Simple color interpolation
+      return factor < 1 ? color1 : color2;
+    }
+
+    function animate() {
+      if (prefersReducedMotion) {
+        // Static display for reduced motion
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        cells.forEach(cell => {
+          ctx.fillStyle = cell.targetColor;
+          ctx.fillRect(cell.x, cell.y, cellSize - 2, cellSize - 2);
+          
+          ctx.fillStyle = 'white';
+          ctx.font = '14px monospace';
+          ctx.textAlign = 'center';
+          ctx.fillText(
+            cell.value.toString(), 
+            cell.x + cellSize / 2, 
+            cell.y + cellSize / 2 + 4
+          );
+        });
+        return;
+      }
+
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // Update and draw cells
+      cells.forEach(cell => {
+        cell.animProgress = Math.min(cell.animProgress + 0.03, 1);
+        cell.currentColor = interpolateColor(cell.currentColor, cell.targetColor, cell.animProgress);
+        
+        // Draw cell
+        ctx.fillStyle = cell.currentColor;
+        ctx.fillRect(cell.x, cell.y, cellSize - 2, cellSize - 2);
+        
+        // Draw value
+        ctx.fillStyle = 'white';
+        ctx.font = '14px monospace';
+        ctx.textAlign = 'center';
+        ctx.fillText(
+          cell.value.toString(), 
+          cell.x + cellSize / 2, 
+          cell.y + cellSize / 2 + 4
+        );
+      });
+
+      // Continue animation if not complete
+      if (cells.some(cell => cell.animProgress < 1)) {
+        animationId = requestAnimationFrame(animate);
+      } else {
+        // Start new generation after delay
+        setTimeout(() => {
+          generateMatrix();
+          animationId = requestAnimationFrame(animate);
+        }, 2000);
+      }
+    }
+
+    // Initialize
+    generateMatrix();
+    animate();
+
+    // Cleanup function for when component unmounts
+    return () => {
+      if (animationId) {
+        cancelAnimationFrame(animationId);
+      }
+    };
+  }
+
+  // Initialize when component is in view
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initLinearAlgebraVisual);
+  } else {
+    initLinearAlgebraVisual();
+  }
+</script>
+
+<style>
+  .linear-algebra-visual {
+    width: 100%;
+    height: 200px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, rgba(76, 0, 130, 0.1), rgba(25, 25, 112, 0.05));
+    border-radius: 8px;
+    position: relative;
+    overflow: hidden;
+    gap: 1rem;
+  }
+
+  #matrix-canvas {
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
+    background: rgba(0, 0, 0, 0.3);
+  }
+
+  .matrix-info {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.25rem;
+  }
+
+  .matrix-label {
+    font-size: 0.8rem;
+    color: rgba(255, 255, 255, 0.7);
+    font-family: 'Courier New', monospace;
+  }
+
+  .determinant-value {
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: var(--accent-light);
+    font-family: 'Courier New', monospace;
+    min-width: 3ch;
+    text-align: center;
+  }
+
+  /* Reduced motion support */
+  @media (prefers-reduced-motion: reduce) {
+    #matrix-canvas {
+      animation: none;
+    }
+  }
+</style>

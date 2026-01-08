@@ -20,6 +20,7 @@ from scipy.ndimage import gaussian_filter
 import io
 import logging
 import os
+import gc
 
 # Configure logging for production
 logging.basicConfig(level=logging.INFO)
@@ -657,6 +658,10 @@ def generate_wallpaper():
         
         # Convert NumPy array to PIL Image
         image = Image.fromarray(rgba_array, 'RGBA')
+        
+        # Explicit memory cleanup before PNG encoding
+        del rgba_array
+        gc.collect()
         
         # Save to memory buffer instead of filesystem
         img_buffer = io.BytesIO()

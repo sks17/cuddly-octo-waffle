@@ -77,6 +77,11 @@ export interface RenderSpec {
     min: number;
     max: number;
   };
+  alpha_map?: {
+    width: number;
+    height: number;
+    alpha_values: number[][];
+  };
   blocks: Array<{
     x: number;
     y: number;
@@ -189,6 +194,35 @@ function renderBlock(
       ctx.fillRect(cellX, cellY, cellSize, cellSize);
     }
   }
+}
+
+/**
+ * Apply alpha mapping from ImgMap.jpg data (matches traditional generator behavior)
+ */
+function applyAlphaMapping(
+  ctx: CanvasRenderingContext2D,
+  canvas: HTMLCanvasElement,
+  alphaMap: { width: number; height: number; alpha_values: number[][] }
+): void {
+  const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  const data = imageData.data;
+  
+  // Apply alpha values from ImgMap.jpg
+  for (let y = 0; y < canvas.height; y++) {
+    for (let x = 0; x < canvas.width; x++) {
+      const pixelIndex = (y * canvas.width + x) * 4;
+      
+      // Get alpha value from map (clamped to canvas bounds)
+      const mapX = Math.floor((x / canvas.width) * alphaMap.width);
+      const mapY = Math.floor((y / canvas.height) * alphaMap.height);
+      const alpha = alphaMap.alpha_values[mapY]?.[mapX] ?? 1.0;
+      
+      // Apply alpha (convert 0-1 to 0-255)
+      data[pixelIndex + 3] = Math.floor(alpha * 255);
+    }
+  }
+  
+  ctx.putImageData(imageData, 0, 0);
 }
 
 /**
@@ -305,6 +339,38 @@ export async function canvasToBlob(canvas: HTMLCanvasElement): Promise<Blob> {
       }
     }, 'image/png');
   });
+}
+
+/**
+ * Apply alpha mapping from ImgMap.jpg data (matches traditional generator behavior)
+ * 
+ * This function applies transparency effects based on the color intensity of ImgMap.jpg,
+ * exactly matching the algorithm used in the traditional Python generator.
+ */
+function applyAlphaMapping(
+  ctx: CanvasRenderingContext2D,
+  canvas: HTMLCanvasElement,
+  alphaMap: { width: number; height: number; alpha_values: number[][] }
+): void {
+  const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  const data = imageData.data;
+  
+  // Apply alpha values from ImgMap.jpg color intensity calculation
+  for (let y = 0; y < canvas.height; y++) {
+    for (let x = 0; x < canvas.width; x++) {
+      const pixelIndex = (y * canvas.width + x) * 4;
+      
+      // Get alpha value from map (scaled to canvas dimensions)
+      const mapX = Math.min(Math.floor((x / canvas.width) * alphaMap.width), alphaMap.width - 1);
+      const mapY = Math.min(Math.floor((y / canvas.height) * alphaMap.height), alphaMap.height - 1);
+      const alpha = alphaMap.alpha_values[mapY]?.[mapX] ?? 1.0;
+      
+      // Apply alpha: strong colors in ImgMap → opaque canvas, weak colors → transparent
+      data[pixelIndex + 3] = Math.floor(alpha * 255);
+    }
+  }
+  
+  ctx.putImageData(imageData, 0, 0);
 }
 
 /**

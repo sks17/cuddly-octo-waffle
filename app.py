@@ -280,6 +280,42 @@ def generate_determinant_canvas(canvas_width, canvas_height, low, high, cell_siz
 
     # Return render spec instead of rendering pixels
     if output_format == "spec":
+        # Load ImgMap.jpg for alpha mapping if it exists
+        alpha_map_data = None
+        imgmap_path = os.path.join("LinearAlgebraWallpapers", "ImgMap.jpg")
+        if os.path.exists(imgmap_path):
+            try:
+                map_img = Image.open(imgmap_path).convert("RGB")
+                # Resize to match canvas if needed
+                if map_img.size != (canvas_width, canvas_height):
+                    map_img = map_img.resize((canvas_width, canvas_height), Image.LANCZOS)
+                
+                # Convert to array and calculate alpha from color intensity
+                map_array = np.asarray(map_img, dtype=np.float32)
+                r, g, b = map_array[..., 0], map_array[..., 1], map_array[..., 2]
+                luminance = 0.2126 * r + 0.7152 * g + 0.0722 * b
+                
+                # Calculate color intensity for alpha
+                color_intensity = np.sqrt(
+                    (r - luminance)**2 + 
+                    (g - luminance)**2 + 
+                    (b - luminance)**2
+                )
+                
+                # Normalize to 0-1 range for frontend
+                if color_intensity.max() > 0:
+                    alpha_values = (color_intensity / color_intensity.max()).tolist()
+                else:
+                    alpha_values = [[1.0 for _ in range(canvas_width)] for _ in range(canvas_height)]
+                    
+                alpha_map_data = {
+                    "width": canvas_width,
+                    "height": canvas_height, 
+                    "alpha_values": alpha_values
+                }
+            except Exception as e:
+                logger.warning(f"Failed to load ImgMap.jpg for alpha mapping: {e}")
+        
         return {
             "canvas": {
                 "width": int(canvas_width),
@@ -301,6 +337,7 @@ def generate_determinant_canvas(canvas_width, canvas_height, low, high, cell_siz
                 "min": float(det_min),
                 "max": float(det_max)
             },
+            "alpha_map": alpha_map_data,
             "blocks": [
                 {
                     "x": int(p["x_pixel"]),

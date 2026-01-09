@@ -197,35 +197,6 @@ function renderBlock(
 }
 
 /**
- * Apply alpha mapping from ImgMap.jpg data (matches traditional generator behavior)
- */
-function applyAlphaMapping(
-  ctx: CanvasRenderingContext2D,
-  canvas: HTMLCanvasElement,
-  alphaMap: { width: number; height: number; alpha_values: number[][] }
-): void {
-  const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-  const data = imageData.data;
-  
-  // Apply alpha values from ImgMap.jpg
-  for (let y = 0; y < canvas.height; y++) {
-    for (let x = 0; x < canvas.width; x++) {
-      const pixelIndex = (y * canvas.width + x) * 4;
-      
-      // Get alpha value from map (clamped to canvas bounds)
-      const mapX = Math.floor((x / canvas.width) * alphaMap.width);
-      const mapY = Math.floor((y / canvas.height) * alphaMap.height);
-      const alpha = alphaMap.alpha_values[mapY]?.[mapX] ?? 1.0;
-      
-      // Apply alpha (convert 0-1 to 0-255)
-      data[pixelIndex + 3] = Math.floor(alpha * 255);
-    }
-  }
-  
-  ctx.putImageData(imageData, 0, 0);
-}
-
-/**
  * Color mapping function that matches backend color_from_integer logic
  */
 function colorFromInteger(

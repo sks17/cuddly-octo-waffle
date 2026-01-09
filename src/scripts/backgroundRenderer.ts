@@ -313,12 +313,12 @@ export async function canvasToBlob(canvas: HTMLCanvasElement): Promise<Blob> {
 }
 
 /**
- * Apply alpha mapping from ImgMap.jpg data (matches traditional generator behavior)
+ * Apply alpha mapping from ImgMap.jpg data (brightness-based transparency)
  * 
- * Uses color intensity method (exactly matching traditional Python generator):
- * - Strong colors (high color intensity) → opaque output
- * - Weak colors (low color intensity, including black/gray) → transparent output
- * - Color intensity = sqrt((r-luminance)² + (g-luminance)² + (b-luminance)²)
+ * Uses brightness/darkness method:
+ * - Dark areas in ImgMap → transparent background areas
+ * - Light/colored areas in ImgMap → opaque background areas  
+ * - Alpha directly based on luminance/brightness values
  */
 function applyAlphaMapping(
   ctx: CanvasRenderingContext2D,
@@ -328,7 +328,7 @@ function applyAlphaMapping(
   const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
   const data = imageData.data;
   
-  // Apply alpha values from ImgMap.jpg color intensity calculation
+  // Apply alpha values from ImgMap.jpg brightness-based calculation
   for (let y = 0; y < canvas.height; y++) {
     for (let x = 0; x < canvas.width; x++) {
       const pixelIndex = (y * canvas.width + x) * 4;
@@ -338,7 +338,7 @@ function applyAlphaMapping(
       const mapY = Math.min(Math.floor((y / canvas.height) * alphaMap.height), alphaMap.height - 1);
       const alpha = alphaMap.alpha_values[mapY]?.[mapX] ?? 1.0;
       
-      // Apply alpha: strong colors (high intensity) → opaque, weak colors (black/gray) → transparent
+      // Apply alpha: dark ImgMap areas → transparent, light ImgMap areas → opaque
       data[pixelIndex + 3] = Math.floor(alpha * 255);
     }
   }

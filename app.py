@@ -294,24 +294,17 @@ def generate_determinant_canvas(canvas_width, canvas_height, low, high, cell_siz
                 if map_img.size != (canvas_width, canvas_height):
                     map_img = map_img.resize((canvas_width, canvas_height), Image.LANCZOS)
                 
-                # Convert to array and calculate alpha from color intensity (matches traditional)
-                # Strong colors → opaque, weak colors (including black) → transparent  
+                # Convert to array and calculate alpha from brightness/darkness
+                # Dark areas in ImgMap → transparent background, light/colored areas → opaque background  
                 map_array = np.asarray(map_img, dtype=np.float32)
                 r, g, b = map_array[..., 0], map_array[..., 1], map_array[..., 2]
                 
-                # Calculate luminance (grayscale value)
+                # Calculate luminance (brightness) 
                 luminance = 0.2126 * r + 0.7152 * g + 0.0722 * b
                 
-                # Color intensity = how far RGB values deviate from the gray value
-                color_intensity = np.sqrt(
-                    (r - luminance)**2 + 
-                    (g - luminance)**2 + 
-                    (b - luminance)**2
-                )
-                
-                # Use fixed scaling like traditional generator (not max normalization)
-                # Scale by 128 to match traditional behavior: strong colors = high alpha
-                alpha_values = np.clip(color_intensity / 128.0, 0.0, 1.0).tolist()
+                # Dark areas → transparent, light/colored areas → opaque
+                # Use luminance directly: dark pixels get low alpha, light pixels get high alpha
+                alpha_values = np.clip(luminance / 255.0, 0.0, 1.0).tolist()
                     
                 alpha_map_data = {
                     "width": canvas_width,

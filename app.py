@@ -307,12 +307,9 @@ def generate_determinant_canvas(canvas_width, canvas_height, low, high, cell_siz
                     (b - luminance)**2
                 )
                 
-                # Normalize to 0-1 range for frontend
-                if color_intensity.max() > 0:
-                    alpha_values = (color_intensity / color_intensity.max()).tolist()
-                else:
-                    # If all pixels have zero color intensity, make them all opaque
-                    alpha_values = [[1.0 for _ in range(canvas_width)] for _ in range(canvas_height)]
+                # Use fixed scaling like traditional generator (not max normalization)
+                # Scale by 128 to match traditional behavior: strong colors = high alpha
+                alpha_values = np.clip(color_intensity / 128.0, 0.0, 1.0).tolist()
                     
                 alpha_map_data = {
                     "width": canvas_width,

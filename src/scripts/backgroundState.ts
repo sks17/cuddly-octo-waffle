@@ -20,7 +20,8 @@ import {
   setCachedBackground,
   getCacheStats,
   clearCache,
-  listCachedBackgrounds 
+  listCachedBackgrounds,
+  clearStaleBlobUrls
 } from './backgroundCache';
 import { generateDistributedBackground } from './backgroundRenderer';
 
@@ -196,12 +197,28 @@ export function resetState(): void {
 /**
  * Initialize accent theme with current hue on page load
  * This ensures the accent colors match the persisted background immediately
+ * and prevents theme conflicts by coordinating with accentTheme.ts
  */
 export function initializeAccentTheme(): void {
   console.log('🎨 Initializing accent theme with hue:', currentState.hue);
-  console.log('🎨 Current document classes:', document.documentElement.classList.toString());
-  // Note: Don't call setAccentHue immediately to allow intro animation to play first
-  // setAccentHue(currentState.hue);
+  
+  // Clear any stale blob URLs from cache to prevent ERR_FILE_NOT_FOUND errors
+  clearStaleBlobUrls();
+  
+  // Ensure the accent theme system is ready
+  const existingHue = document.documentElement.getAttribute('data-accent-hue');
+  if (!existingHue) {
+    // Set the persisted hue as the data attribute for coordination
+    document.documentElement.setAttribute('data-accent-hue', currentState.hue);
+  }
+  
+  // Apply the accent theme to match the persisted background state
+  // Use dynamic import to avoid module loading conflicts
+  import('./accentTheme').then(({ setAccentHue }) => {
+    setAccentHue(currentState.hue);
+  }).catch(error => {
+    console.warn('⚠️ Failed to load accent theme:', error);
+  });
 }
 
 /**
@@ -221,15 +238,20 @@ export async function generateBackground(): Promise<void> {
     return;
   }
 
-  // Check cache first
+  // Check cache first (getCachedBackground already validates for blob URLs)
   const cachedUrl = getCachedBackground(currentState);
   if (cachedUrl) {
     console.log('🗄️ Using cached background');
-    // Don't revoke cached URLs as they may still be valid
+    // Don't revoke cached URLs as they may still be valid (non-blob URLs)
     if (currentBlobUrl && currentBlobUrl.startsWith('blob:') && currentBlobUrl !== cachedUrl) {
       URL.revokeObjectURL(currentBlobUrl);
     }
-    currentBlobUrl = cachedUrl;
+    // Only update currentBlobUrl if it's a blob URL (cached URLs should not be blob URLs)
+    if (cachedUrl.startsWith('blob:')) {
+      currentBlobUrl = cachedUrl;
+    } else {
+      currentBlobUrl = null;
+    }
     updateBackgroundImage(cachedUrl);
     setAccentHue(currentState.hue);
     return;
@@ -338,7 +360,13 @@ function updateBackgroundImage(imageUrl: string): void {
     console.log('🧹 Cleaning up previous blob URL');
     URL.revokeObjectURL(currentBlobUrl);
   }
-  currentBlobUrl = imageUrl;
+  
+  // Only track blob URLs (data URLs and regular URLs don't need cleanup)
+  if (imageUrl.startsWith('blob:')) {
+    currentBlobUrl = imageUrl;
+  } else {
+    currentBlobUrl = null;
+  }
 
   if (!backgroundElement) {
     console.error('❌ Background element not found');

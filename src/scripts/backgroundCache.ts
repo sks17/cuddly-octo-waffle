@@ -137,17 +137,20 @@ function cleanupCache(cache: BackgroundCache): BackgroundCache {
   const entries = { ...cache.entries };
   let removedCount = 0;
   
-  // Remove entries older than 1 week OR with invalid development URLs
+  // Remove entries older than 1 week OR with invalid development/blob URLs
   Object.keys(entries).forEach(key => {
     const entry = entries[key];
     const isExpired = now - entry.timestamp > ONE_WEEK;
     const hasDevUrl = entry.backgroundUrl.includes('localhost:5000') || entry.backgroundUrl.includes('127.0.0.1:5000');
+    const isBlobUrl = entry.backgroundUrl.startsWith('blob:');
     
-    if (isExpired || hasDevUrl) {
+    if (isExpired || hasDevUrl || isBlobUrl) {
       delete entries[key];
       removedCount++;
       if (hasDevUrl) {
         console.log(`🗄️ Background cache: Removed development URL entry "${key}"`);
+      } else if (isBlobUrl) {
+        console.log(`🗄️ Background cache: Removed invalid blob URL entry "${key}"`);
       }
     }
   });
@@ -179,6 +182,7 @@ function cleanupCache(cache: BackgroundCache): BackgroundCache {
 
 /**
  * Get cached background URL if available and valid
+ * Filters out blob URLs and development URLs that become invalid
  */
 export function getCachedBackground(config: BackgroundConfig): string | null {
   const cache = loadCache();
@@ -186,9 +190,13 @@ export function getCachedBackground(config: BackgroundConfig): string | null {
   const entry = cache.entries[key];
   
   if (entry) {
-    // Invalidate cache entries with development URLs (old API)
-    if (entry.backgroundUrl.includes('localhost:5000') || entry.backgroundUrl.includes('127.0.0.1:5000')) {
-      console.log(`🗄️ Background cache: Invalidating old development URL entry "${describeCacheKey(key)}"`);
+    // Invalidate cache entries with development URLs or blob URLs (both become invalid)
+    const hasDevUrl = entry.backgroundUrl.includes('localhost:5000') || entry.backgroundUrl.includes('127.0.0.1:5000');
+    const isBlobUrl = entry.backgroundUrl.startsWith('blob:');
+    
+    if (hasDevUrl || isBlobUrl) {
+      const reason = hasDevUrl ? 'old development URL' : 'blob URL (invalid across sessions)';
+      console.log(`🗄️ Background cache: Removing ${reason} entry "${describeCacheKey(key)}"`);
       delete cache.entries[key];
       saveCache(cache);
       return null;
@@ -202,9 +210,16 @@ export function getCachedBackground(config: BackgroundConfig): string | null {
 }
 
 /**
- * Store generated background in cache
+ * Store generated background in cache with validation
+ * Blob URLs are not cached as they become invalid on page reload
  */
 export function setCachedBackground(config: BackgroundConfig, backgroundUrl: string): void {
+  // Don't cache blob URLs - they become invalid on page reload/session change
+  if (backgroundUrl.startsWith('blob:')) {
+    console.log('🚫 Background cache: Skipping blob URL (invalid across sessions)');
+    return;
+  }
+  
   let cache = loadCache();
   cache = cleanupCache(cache);
   
@@ -244,6 +259,29 @@ export function getCacheStats(): {
     newestEntry: timestamps.length > 0 ? Math.max(...timestamps) : null,
     cacheSize: `${(cacheSize / 1024).toFixed(2)} KB`
   };
+}
+
+/**
+ * Clear stale blob URLs from cache (called on page load)
+ * Blob URLs become invalid when the page reloads, so clean them up immediately
+ */
+export function clearStaleBlobUrls(): void {
+  const cache = loadCache();
+  let removedCount = 0;
+  
+  Object.keys(cache.entries).forEach(key => {
+    const entry = cache.entries[key];
+    if (entry.backgroundUrl.startsWith('blob:')) {
+      delete cache.entries[key];
+      removedCount++;
+      console.log(`🗄️ Background cache: Removed stale blob URL entry "${key}"`);
+    }
+  });
+  
+  if (removedCount > 0) {
+    saveCache(cache);
+    console.log(`🗄️ Background cache: Cleaned up ${removedCount} stale blob URLs`);
+  }
 }
 
 /**

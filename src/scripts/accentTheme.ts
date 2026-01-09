@@ -147,10 +147,16 @@ export function updateAccentTheme(hue: string): void {
 }
 
 /**
- * Initializes accent theme system
- * Sets up theme change listener to re-adjust colors when switching light/dark mode
+ * Initializes accent theme system with conflict prevention
+ * Sets up theme change listener and ensures purple default
  */
 export function initAccentTheme(): void {
+  // Prevent multiple initializations
+  if (document.documentElement.hasAttribute('data-accent-system-initialized')) {
+    return;
+  }
+  document.documentElement.setAttribute('data-accent-system-initialized', 'true');
+  
   // Listen for theme changes (light/dark mode toggle)
   const observer = new MutationObserver(() => {
     // Re-apply current accent theme with new light/dark context
@@ -163,9 +169,11 @@ export function initAccentTheme(): void {
     attributeFilter: ['class']
   });
   
-  // Set initial hue data attribute if not present
+  // Set initial hue data attribute if not present (default to purple)
   if (!document.documentElement.getAttribute('data-accent-hue')) {
     document.documentElement.setAttribute('data-accent-hue', 'purple');
+    // Apply the default purple theme immediately
+    updateAccentTheme('purple');
   }
   
   console.log('🎨 Accent theme system initialized');

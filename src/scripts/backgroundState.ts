@@ -21,7 +21,8 @@ import {
   getCacheStats,
   clearCache,
   listCachedBackgrounds,
-  clearStaleBlobUrls
+  clearStaleBlobUrls,
+  getMostRecentBackground
 } from './backgroundCache';
 import { generateDistributedBackground } from './backgroundRenderer';
 
@@ -205,17 +206,26 @@ export function initializeAccentTheme(): void {
   // Clear any stale blob URLs from cache to prevent ERR_FILE_NOT_FOUND errors
   clearStaleBlobUrls();
   
-  // Ensure the accent theme system is ready
-  const existingHue = document.documentElement.getAttribute('data-accent-hue');
-  if (!existingHue) {
-    // Set the persisted hue as the data attribute for coordination
-    document.documentElement.setAttribute('data-accent-hue', currentState.hue);
+  // Check if we have a most recent background that should override current state
+  const mostRecent = getMostRecentBackground();
+  if (mostRecent) {
+    console.log('🎨 Found most recent background config, using its hue:', mostRecent.config.hue);
+    // Don't update currentState here - let initializeBackground handle it
+    // Just set the accent to match what will be loaded
+    if (document.documentElement.getAttribute('data-accent-hue') !== mostRecent.config.hue) {
+      document.documentElement.setAttribute('data-accent-hue', mostRecent.config.hue);
+    }
+  } else {
+    // First-time user - ensure purple default
+    if (!document.documentElement.getAttribute('data-accent-hue')) {
+      document.documentElement.setAttribute('data-accent-hue', 'purple');
+    }
   }
   
-  // Apply the accent theme to match the persisted background state
-  // Use dynamic import to avoid module loading conflicts
+  // Apply the accent theme using dynamic import to avoid conflicts
+  const targetHue = document.documentElement.getAttribute('data-accent-hue') || 'purple';
   import('./accentTheme').then(({ setAccentHue }) => {
-    setAccentHue(currentState.hue);
+    setAccentHue(targetHue);
   }).catch(error => {
     console.warn('⚠️ Failed to load accent theme:', error);
   });
@@ -323,8 +333,8 @@ export async function generateBackground(): Promise<void> {
     
     console.log('✅ Background generated successfully');
     
-    // Cache the generated background
-    setCachedBackground(currentState, imageUrl);
+    // Cache the generated background (pass blob for most recent storage)
+    setCachedBackground(currentState, imageUrl, imageBlob);
     
     updateBackgroundImage(imageUrl);
     
@@ -420,9 +430,39 @@ export const cache = {
 };
 
 /**
- * Initialize with default background
+ * Initialize background with smart loading:
+ * 1. If user has generated backgrounds before, load most recent one
+ * 2. If first-time user, generate default purple background  
+ * 3. Update state and accent theme to match loaded background
  */
 export async function initializeBackground(): Promise<void> {
   console.log('🚀 Initializing background with default state');
-  await generateBackground();
+  
+  // Check for most recent background first (indicates returning user)
+  const mostRecent = getMostRecentBackground();
+  
+  if (mostRecent) {
+    console.log('🕑 Found most recent background, loading for returning user');
+    
+    // Update state to match the most recent background's config
+    currentState = { ...mostRecent.config };
+    saveConfig(currentState);
+    
+    // Update background image in DOM
+    updateBackgroundImage(mostRecent.backgroundUrl);
+    
+    // Update accent theme to match
+    setAccentHue(currentState.hue);
+    
+    console.log('✅ Most recent background loaded successfully');
+  } else {
+    console.log('🎆 First-time user, generating default purple background');
+    
+    // Ensure default state is purple for first-time users  
+    currentState = { ...DEFAULT_CONFIG };
+    saveConfig(currentState);
+    
+    // Generate the default background
+    await generateBackground();
+  }
 }

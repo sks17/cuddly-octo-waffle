@@ -8,6 +8,7 @@
 import type { BackgroundConfig } from './backgroundState';
 
 const CACHE_STORAGE_KEY = 'background-generation-cache';
+const RECENT_BACKGROUND_KEY = 'most-recent-background';
 const CACHE_VERSION = '1.0';
 const MAX_CACHE_ENTRIES = 50; // Prevent unlimited growth
 
@@ -15,6 +16,13 @@ export interface CacheEntry {
   key: string;
   config: BackgroundConfig;
   backgroundUrl: string;
+  timestamp: number;
+  version: string;
+}
+
+export interface RecentBackground {
+  backgroundUrl: string;
+  config: BackgroundConfig;
   timestamp: number;
   version: string;
 }
@@ -212,30 +220,33 @@ export function getCachedBackground(config: BackgroundConfig): string | null {
 /**
  * Store generated background in cache with validation
  * Blob URLs are not cached as they become invalid on page reload
+ * Also stores as most recent background for initialization
  */
-export function setCachedBackground(config: BackgroundConfig, backgroundUrl: string): void {
-  // Don't cache blob URLs - they become invalid on page reload/session change
-  if (backgroundUrl.startsWith('blob:')) {
+export function setCachedBackground(config: BackgroundConfig, backgroundUrl: string, imageBlob?: Blob): void {
+  // Don't cache blob URLs in configuration cache - they become invalid on page reload/session change
+  if (!backgroundUrl.startsWith('blob:')) {
+    let cache = loadCache();
+    cache = cleanupCache(cache);
+    
+    const key = generateCacheKey(config);
+    const entry: CacheEntry = {
+      key,
+      config,
+      backgroundUrl,
+      timestamp: Date.now(),
+      version: CACHE_VERSION
+    };
+    
+    cache.entries[key] = entry;
+    saveCache(cache);
+    
+    console.log(`🗄️ Background cache: Stored "${describeCacheKey(key)}"`);
+  } else {
     console.log('🚫 Background cache: Skipping blob URL (invalid across sessions)');
-    return;
   }
   
-  let cache = loadCache();
-  cache = cleanupCache(cache);
-  
-  const key = generateCacheKey(config);
-  const entry: CacheEntry = {
-    key,
-    config,
-    backgroundUrl,
-    timestamp: Date.now(),
-    version: CACHE_VERSION
-  };
-  
-  cache.entries[key] = entry;
-  saveCache(cache);
-  
-  console.log(`🗄️ Background cache: Stored "${describeCacheKey(key)}"`);
+  // Always try to store as most recent background (handles blob URL conversion)
+  setMostRecentBackground(config, backgroundUrl, imageBlob);
 }
 
 /**
@@ -282,6 +293,114 @@ export function clearStaleBlobUrls(): void {
     saveCache(cache);
     console.log(`🗄️ Background cache: Cleaned up ${removedCount} stale blob URLs`);
   }
+}
+
+/**
+ * Store the most recent background (separate from config-based cache)
+ * This persists the last generated background regardless of configuration
+ * Converts blob URLs to data URLs for cross-session persistence
+ */
+export function setMostRecentBackground(config: BackgroundConfig, backgroundUrl: string, imageBlob?: Blob): void {
+  try {
+    // If it's a blob URL, we need to convert to data URL for persistence
+    if (backgroundUrl.startsWith('blob:') && imageBlob) {
+      // Convert blob to data URL for persistent storage
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const dataUrl = reader.result as string;
+        storeRecentBackground(config, dataUrl);
+      };
+      reader.onerror = () => {
+        console.warn('🚫 Most recent background: Failed to convert blob to data URL');
+      };
+      reader.readAsDataURL(imageBlob);
+    } else if (!backgroundUrl.startsWith('blob:')) {
+      // Regular URLs (data URLs, http URLs) can be stored directly
+      storeRecentBackground(config, backgroundUrl);
+    } else {
+      console.log('🚫 Most recent background: Blob URL without blob data, skipping');
+    }
+  } catch (error) {
+    console.warn('Failed to store most recent background:', error);
+  }
+}
+
+/**
+ * Internal function to store recent background data
+ */
+function storeRecentBackground(config: BackgroundConfig, backgroundUrl: string): void {
+  try {
+    const recentBg: RecentBackground = {
+      backgroundUrl,
+      config: { ...config },
+      timestamp: Date.now(),
+      version: CACHE_VERSION
+    };
+    
+    localStorage.setItem(RECENT_BACKGROUND_KEY, JSON.stringify(recentBg));
+    console.log(`🕑 Stored most recent background: ${describeCacheKey(generateCacheKey(config))}`);
+  } catch (error) {
+    console.warn('Failed to store recent background data:', error);
+  }
+}
+
+/**
+ * Get the most recent background if valid and not expired
+ * Returns both the URL and the config it was generated with
+ */
+export function getMostRecentBackground(): { backgroundUrl: string; config: BackgroundConfig } | null {
+  try {
+    const stored = localStorage.getItem(RECENT_BACKGROUND_KEY);
+    if (!stored) {
+      return null;
+    }
+    
+    const recentBg: RecentBackground = JSON.parse(stored);
+    
+    // Validate version
+    if (recentBg.version !== CACHE_VERSION) {
+      console.log('🕑 Most recent background: Version mismatch, ignoring');
+      localStorage.removeItem(RECENT_BACKGROUND_KEY);
+      return null;
+    }
+    
+    // Check if too old (24 hours)
+    const age = Date.now() - recentBg.timestamp;
+    if (age > 24 * 60 * 60 * 1000) {
+      console.log('🕑 Most recent background: Expired (>24h), ignoring');
+      localStorage.removeItem(RECENT_BACKGROUND_KEY);
+      return null;
+    }
+    
+    // Validate URL is not a blob or development URL (data URLs are OK for persistence)
+    const hasDevUrl = recentBg.backgroundUrl.includes('localhost:5000') || recentBg.backgroundUrl.includes('127.0.0.1:5000');
+    const isBlobUrl = recentBg.backgroundUrl.startsWith('blob:');
+    
+    if (hasDevUrl || isBlobUrl) {
+      const reason = hasDevUrl ? 'development URL' : 'blob URL';
+      console.log(`🕑 Most recent background: Removing invalid ${reason}`);
+      localStorage.removeItem(RECENT_BACKGROUND_KEY);
+      return null;
+    }
+    
+    console.log(`🕑 Most recent background: Found "${describeCacheKey(generateCacheKey(recentBg.config))}"`);
+    return {
+      backgroundUrl: recentBg.backgroundUrl,
+      config: recentBg.config
+    };
+  } catch (error) {
+    console.warn('Failed to get most recent background:', error);
+    localStorage.removeItem(RECENT_BACKGROUND_KEY);
+    return null;
+  }
+}
+
+/**
+ * Clear the most recent background (for debugging)
+ */
+export function clearMostRecentBackground(): void {
+  localStorage.removeItem(RECENT_BACKGROUND_KEY);
+  console.log('🕑 Most recent background: Cleared');
 }
 
 /**

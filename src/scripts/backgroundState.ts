@@ -163,6 +163,9 @@ let isGenerating = false;
 // Background element reference
 let backgroundElement: HTMLDivElement | null = null;
 
+// Current blob URL tracking for cleanup (prevents ERR_FILE_NOT_FOUND errors)
+let currentBlobUrl: string | null = null;
+
 /**
  * Get current state (read-only copy)
  */
@@ -222,6 +225,11 @@ export async function generateBackground(): Promise<void> {
   const cachedUrl = getCachedBackground(currentState);
   if (cachedUrl) {
     console.log('🗄️ Using cached background');
+    // Don't revoke cached URLs as they may still be valid
+    if (currentBlobUrl && currentBlobUrl.startsWith('blob:') && currentBlobUrl !== cachedUrl) {
+      URL.revokeObjectURL(currentBlobUrl);
+    }
+    currentBlobUrl = cachedUrl;
     updateBackgroundImage(cachedUrl);
     setAccentHue(currentState.hue);
     return;
@@ -324,6 +332,13 @@ export async function generateBackground(): Promise<void> {
  */
 function updateBackgroundImage(imageUrl: string): void {
   console.log('🖼️ Updating background image:', imageUrl);
+
+  // Clean up previous blob URL to prevent ERR_FILE_NOT_FOUND errors
+  if (currentBlobUrl && currentBlobUrl.startsWith('blob:') && currentBlobUrl !== imageUrl) {
+    console.log('🧹 Cleaning up previous blob URL');
+    URL.revokeObjectURL(currentBlobUrl);
+  }
+  currentBlobUrl = imageUrl;
 
   if (!backgroundElement) {
     console.error('❌ Background element not found');

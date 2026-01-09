@@ -36,6 +36,8 @@ CORS(app,
          "https://far-flare.vercel.app",
          "http://localhost:4321",  # Local Astro dev server
          "http://localhost:4322",  # Local Astro dev server (alternate port)
+         "http://localhost:4323",  # Local Astro dev server (alternate port)
+         "http://localhost:4324",  # Local Astro dev server (alternate port)
          "http://localhost:8080",  # Local test server
          "http://127.0.0.1:8080"   # Alternative localhost format
      ], 

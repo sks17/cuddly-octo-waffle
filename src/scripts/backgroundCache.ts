@@ -137,17 +137,17 @@ function cleanupCache(cache: BackgroundCache): BackgroundCache {
   const entries = { ...cache.entries };
   let removedCount = 0;
   
-  // Remove entries older than 1 week OR with invalid localhost URLs
+  // Remove entries older than 1 week OR with invalid development URLs
   Object.keys(entries).forEach(key => {
     const entry = entries[key];
     const isExpired = now - entry.timestamp > ONE_WEEK;
-    const hasLocalhost = entry.backgroundUrl.includes('localhost:5000') || entry.backgroundUrl.includes('127.0.0.1:5000');
+    const hasDevUrl = entry.backgroundUrl.includes('localhost:5000') || entry.backgroundUrl.includes('127.0.0.1:5000');
     
-    if (isExpired || hasLocalhost) {
+    if (isExpired || hasDevUrl) {
       delete entries[key];
       removedCount++;
-      if (hasLocalhost) {
-        console.log(`🗄️ Background cache: Removed localhost entry "${key}"`);
+      if (hasDevUrl) {
+        console.log(`🗄️ Background cache: Removed development URL entry "${key}"`);
       }
     }
   });
@@ -186,9 +186,9 @@ export function getCachedBackground(config: BackgroundConfig): string | null {
   const entry = cache.entries[key];
   
   if (entry) {
-    // Invalidate cache entries with localhost URLs (old API)
+    // Invalidate cache entries with development URLs (old API)
     if (entry.backgroundUrl.includes('localhost:5000') || entry.backgroundUrl.includes('127.0.0.1:5000')) {
-      console.log(`🗄️ Background cache: Invalidating old localhost entry "${describeCacheKey(key)}"`);
+      console.log(`🗄️ Background cache: Invalidating old development URL entry "${describeCacheKey(key)}"`);
       delete cache.entries[key];
       saveCache(cache);
       return null;

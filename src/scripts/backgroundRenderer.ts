@@ -271,7 +271,7 @@ export async function generateDistributedBackground(params: any): Promise<Blob> 
   const specParams = { ...params, output_format: 'spec' };
   
   // Determine API endpoint
-  const apiUrl = import.meta.env.PUBLIC_API_URL || 'http://localhost:5000';
+  const apiUrl = import.meta.env.PUBLIC_API_URL || 'https://mathematical-wallpaper-api.fly.dev';
   
   // Fetch render specification from backend
   const response = await fetch(`${apiUrl}/api/generate`, {

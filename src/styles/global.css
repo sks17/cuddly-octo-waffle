@@ -399,57 +399,16 @@ h5 {
 	}
 }
 
-/* Accent Intro Animation - Color Spectrum Cycle */
-@keyframes accentSpectrumCycle {
-	0% { 
-		--accent-regular-override: #ff6b6b; /* Red */
-		--accent-light-override: #ff8e8e;
-		--accent-dark-override: #d63031;
-	}
-	14% { 
-		--accent-regular-override: #ff9f43; /* Orange */
-		--accent-light-override: #ffb366;
-		--accent-dark-override: #e17055;
-	}
-	28% { 
-		--accent-regular-override: #feca57; /* Yellow */
-		--accent-light-override: #fed97a;
-		--accent-dark-override: #fdcb6e;
-	}
-	42% { 
-		--accent-regular-override: #48dbfb; /* Cyan */
-		--accent-light-override: #6be3ff;
-		--accent-dark-override: #0abde3;
-	}
-	56% { 
-		--accent-regular-override: #1dd1a1; /* Green */
-		--accent-light-override: #55efc4;
-		--accent-dark-override: #00b894;
-	}
-	70% { 
-		--accent-regular-override: #5f27cd; /* Purple */
-		--accent-light-override: #a55eea;
-		--accent-dark-override: #341f97;
-	}
-	84% { 
-		--accent-regular-override: #ff3838; /* Pink-Red */
-		--accent-light-override: #ff6b6b;
-		--accent-dark-override: #e55656;
-	}
-	100% { 
-		/* Let setAccentHue() handle final values via inline styles */
-		--accent-regular-override: initial;
-		--accent-light-override: initial;
-		--accent-dark-override: initial;
-	}
-}
+/* Accent Intro Animation - Smooth RGB Gradient (handled by JavaScript) */
+/* CSS animations replaced with smooth requestAnimationFrame-based animation */
 
 .accent-intro-animate {
-	animation: accentSpectrumCycle 6s ease-in-out forwards;
+	/* Placeholder class - animation now handled by JavaScript for smoother performance */
+	transition: all 0.1s ease;
 }
 
 @media (prefers-reduced-motion: reduce) {
 	.accent-intro-animate {
-		animation: none;
+		transition: none;
 	}
 }

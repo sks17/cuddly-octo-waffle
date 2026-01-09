@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Distributed Rendering Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #1a1a1a;
+            color: white;
+        }
+        .controls {
+            margin-bottom: 20px;
+            padding: 15px;
+            background-color: #2a2a2a;
+            border-radius: 8px;
+        }
+        .render-output {
+            display: flex;
+            gap: 20px;
+            align-items: flex-start;
+        }
+        .canvas-container {
+            border: 2px solid #444;
+            border-radius: 8px;
+            padding: 10px;
+            background-color: #333;
+        }
+        canvas {
+            border: 1px solid #666;
+            background-color: black;
+        }
+        .spec-data {
+            flex: 1;
+            background-color: #2a2a2a;
+            border-radius: 8px;
+            padding: 15px;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 600px;
+            overflow-y: auto;
+        }
+        button {
+            background-color: #4a4a4a;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background-color: #5a5a5a;
+        }
+        .status {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .status.loading { background-color: #445566; }
+        .status.success { background-color: #446644; }
+        .status.error { background-color: #664444; }
+        select, input {
+            background-color: #444;
+            color: white;
+            border: 1px solid #666;
+            padding: 5px;
+            margin: 5px;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🎨 Distributed Rendering Test</h1>
+    <p>Testing client-side rendering from backend render specifications</p>
+    
+    <div class="controls">
+        <h3>Configuration</h3>
+        <label>Hue: 
+            <select id="hue">
+                <option value="purple">Purple</option>
+                <option value="blue">Blue</option>
+                <option value="green">Green</option>
+                <option value="red">Red</option>
+                <option value="orange">Orange</option>
+                <option value="yellow">Yellow</option>
+                <option value="pink">Pink</option>
+                <option value="teal">Teal</option>
+                <option value="gray">Gray</option>
+            </select>
+        </label>
+        
+        <label>Width: <input type="number" id="width" value="400" min="100" max="800"></label>
+        <label>Height: <input type="number" id="height" value="300" min="100" max="600"></label>
+        <label>Cell Size: <input type="number" id="cellSize" value="20" min="5" max="50"></label>
+        
+        <br><br>
+        <button onclick="generateDistributed()">Generate (Distributed)</button>
+        <button onclick="generateTraditional()">Generate (Traditional)</button>
+        <button onclick="compareOutputs()">Compare Both</button>
+    </div>
+    
+    <div id="status" class="status" style="display:none;"></div>
+    
+    <div class="render-output">
+        <div class="canvas-container">
+            <h4>Rendered Output</h4>
+            <canvas id="output-canvas"></canvas>
+        </div>
+        <div class="spec-data">
+            <h4>Render Specification</h4>
+            <pre id="spec-display">No data yet</pre>
+        </div>
+    </div>
+    
+    <script type="module">
+        // Configuration
+        const API_BASE = 'http://localhost:5000/api';
+        
+        // Status management
+        function setStatus(message, type = 'loading') {
+            const status = document.getElementById('status');
+            status.textContent = message;
+            status.className = `status ${type}`;
+            status.style.display = 'block';
+        }
+        
+        function clearStatus() {
+            document.getElementById('status').style.display = 'none';
+        }
+        
+        // Get form parameters
+        function getParams() {
+            return {
+                canvas_width: parseInt(document.getElementById('width').value),
+                canvas_height: parseInt(document.getElementById('height').value),
+                cell_size: parseInt(document.getElementById('cellSize').value),
+                hue: document.getElementById('hue').value,
+                low: 0,
+                high: 1,
+                normalizer: 0.5,
+                use_determinant: true,
+                use_max: true,
+                max_matrix_size: 4,
+                pattern: 'mixed',
+                blur_sigma: 1.5,
+                vignette_strength: 0.3,
+                gap_cells: 1,
+                feather_strength: 0.1
+            };
+        }
+        
+        // Simple client-side rendering implementation for testing
+        function renderFromSpec(spec) {
+            const canvas = document.getElementById('output-canvas');
+            canvas.width = spec.canvas.width;
+            canvas.height = spec.canvas.height;
+            
+            const ctx = canvas.getContext('2d');
+            
+            // Clear canvas
+            ctx.fillStyle = 'rgb(0, 0, 0)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Color mapping (simplified)
+            const hueColors = {
+                'gray': [128, 128, 128],
+                'red': [255, 64, 64],
+                'orange': [255, 165, 0],
+                'yellow': [255, 255, 64],
+                'green': [64, 255, 64],
+                'blue': [64, 64, 255],
+                'purple': [160, 64, 255],
+                'pink': [255, 64, 160],
+                'teal': [64, 255, 160]
+            };
+            
+            const baseColor = hueColors[spec.visual.hue] || hueColors.purple;
+            const { min: detMin, max: detMax } = spec.determinant_range;
+            
+            // Render each block
+            for (const block of spec.blocks) {
+                // Calculate brightness from determinant
+                let brightness = 0.5;
+                if (spec.visual.use_determinant && detMax !== detMin) {
+                    brightness = (block.determinant - detMin) / (detMax - detMin);
+                }
+                
+                // Apply color transformation
+                const normalized = brightness * spec.visual.normalizer + (1 - spec.visual.normalizer);
+                const clamped = Math.max(0, Math.min(1, normalized));
+                
+                const r = Math.round(baseColor[0] * clamped);
+                const g = Math.round(baseColor[1] * clamped);
+                const b = Math.round(baseColor[2] * clamped);
+                
+                // Fill block
+                ctx.fillStyle = `rgb(${r}, ${g}, ${b})`;
+                ctx.fillRect(block.x, block.y, block.width, block.height);
+            }
+            
+            // Simple vignette effect
+            if (spec.visual.vignette_strength > 0) {
+                const centerX = canvas.width / 2;
+                const centerY = canvas.height / 2;
+                const maxDistance = Math.sqrt(centerX * centerX + centerY * centerY);
+                
+                const vignette = ctx.createRadialGradient(
+                    centerX, centerY, 0,
+                    centerX, centerY, maxDistance
+                );
+                
+                vignette.addColorStop(0, `rgba(0, 0, 0, 0)`);
+                vignette.addColorStop(1, `rgba(0, 0, 0, ${spec.visual.vignette_strength})`);
+                
+                ctx.globalCompositeOperation = 'multiply';
+                ctx.fillStyle = vignette;
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.globalCompositeOperation = 'source-over';
+            }
+        }
+        
+        // Generate using distributed rendering
+        window.generateDistributed = async function() {
+            setStatus('Fetching render specification...', 'loading');
+            
+            try {
+                const params = getParams();
+                params.output_format = 'spec'; // Request render spec
+                
+                const response = await fetch(`${API_BASE}/generate`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(params)
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`API Error: ${response.status}`);
+                }
+                
+                const spec = await response.json();
+                
+                // Display specification
+                document.getElementById('spec-display').textContent = JSON.stringify(spec, null, 2);
+                
+                setStatus('Rendering client-side...', 'loading');
+                
+                // Render on canvas
+                renderFromSpec(spec);
+                
+                setStatus(`✅ Distributed rendering complete! ${spec.blocks.length} blocks rendered.`, 'success');
+                
+            } catch (error) {
+                setStatus(`❌ Error: ${error.message}`, 'error');
+                console.error('Distributed rendering error:', error);
+            }
+        };
+        
+        // Generate using traditional server-side rendering  
+        window.generateTraditional = async function() {
+            setStatus('Generating server-side image...', 'loading');
+            
+            try {
+                const params = getParams();
+                // No output_format = traditional PNG
+                
+                const response = await fetch(`${API_BASE}/generate`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(params)
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`API Error: ${response.status}`);
+                }
+                
+                const blob = await response.blob();
+                const imageUrl = URL.createObjectURL(blob);
+                
+                // Display on canvas
+                const canvas = document.getElementById('output-canvas');
+                canvas.width = params.canvas_width;
+                canvas.height = params.canvas_height;
+                
+                const ctx = canvas.getContext('2d');
+                const img = new Image();
+                img.onload = () => {
+                    ctx.drawImage(img, 0, 0);
+                    URL.revokeObjectURL(imageUrl);
+                    setStatus('✅ Traditional rendering complete!', 'success');
+                };
+                img.src = imageUrl;
+                
+                // Clear spec display
+                document.getElementById('spec-display').textContent = 'Traditional rendering - no spec data';
+                
+            } catch (error) {
+                setStatus(`❌ Error: ${error.message}`, 'error');
+                console.error('Traditional rendering error:', error);
+            }
+        };
+        
+        // Compare both outputs (for validation)
+        window.compareOutputs = async function() {
+            setStatus('Generating comparison...', 'loading');
+            // Implementation for side-by-side comparison
+            setStatus('Comparison feature coming soon!', 'success');
+        };
+        
+        // Initialize
+        setStatus('Ready to render!', 'success');
+        setTimeout(clearStatus, 2000);
+        
+    </script>
+</body>
+</html>

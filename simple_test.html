@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Simple Background Test</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            margin: 20px; 
+            background: #1a1a1a; 
+            color: white;
+        }
+        canvas { 
+            border: 1px solid #666; 
+            background: black;
+        }
+        .controls { 
+            margin: 20px 0; 
+        }
+        button { 
+            background: #4a4a4a; 
+            color: white; 
+            border: none; 
+            padding: 10px 20px; 
+            margin: 5px; 
+            border-radius: 5px; 
+            cursor: pointer;
+        }
+        button:hover { 
+            background: #5a5a5a; 
+        }
+        #error { 
+            color: red; 
+            margin: 10px 0; 
+        }
+        #success { 
+            color: green; 
+            margin: 10px 0; 
+        }
+    </style>
+</head>
+<body>
+    <h1>Simple Background Test</h1>
+    
+    <div class="controls">
+        <button onclick="testAPI()">Test API Connection</button>
+        <button onclick="generateBackground()">Generate Background</button>
+    </div>
+    
+    <div id="error"></div>
+    <div id="success"></div>
+    
+    <canvas id="canvas" width="400" height="300"></canvas>
+    
+    <script>
+        const API_BASE = 'http://localhost:5000/api';
+        
+        function showError(message) {
+            document.getElementById('error').textContent = message;
+            document.getElementById('success').textContent = '';
+        }
+        
+        function showSuccess(message) {
+            document.getElementById('success').textContent = message;
+            document.getElementById('error').textContent = '';
+        }
+        
+        async function testAPI() {
+            try {
+                const response = await fetch(`${API_BASE}/info`);
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                const data = await response.json();
+                showSuccess(`API connected! Version: ${data.version}`);
+            } catch (error) {
+                showError(`API connection failed: ${error.message}`);
+            }
+        }
+        
+        async function generateBackground() {
+            try {
+                showSuccess('Generating background...');
+                
+                const params = {
+                    canvas_width: 400,
+                    canvas_height: 300,
+                    cell_size: 20,
+                    hue: 'purple',
+                    low: 0,
+                    high: 1,
+                    normalizer: 0.5,
+                    use_determinant: true,
+                    use_max: true
+                };
+                
+                const response = await fetch(`${API_BASE}/render-spec`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(params)
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const spec = await response.json();
+                showSuccess(`Render spec received! Blocks: ${spec.blocks.length}`);
+                
+                // Simple client-side rendering
+                renderFromSpec(spec);
+                
+            } catch (error) {
+                showError(`Generation failed: ${error.message}`);
+            }
+        }
+        
+        function renderFromSpec(spec) {
+            const canvas = document.getElementById('canvas');
+            const ctx = canvas.getContext('2d');
+            
+            // Clear canvas
+            ctx.fillStyle = 'black';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Render each block
+            spec.blocks.forEach(block => {
+                // Simple color mapping based on determinant
+                const brightness = Math.abs(block.determinant) / 10.0; // Simple normalization
+                const r = Math.min(255, brightness * 150 + 50);
+                const g = Math.min(255, brightness * 100 + 30);
+                const b = Math.min(255, brightness * 200 + 100);
+                
+                ctx.fillStyle = `rgb(${Math.floor(r)}, ${Math.floor(g)}, ${Math.floor(b)})`;
+                ctx.fillRect(block.x, block.y, block.width, block.height);
+            });
+            
+            showSuccess('Rendering complete!');
+        }
+    </script>
+</body>
+</html>

@@ -242,8 +242,8 @@ export async function generateBackground(): Promise<void> {
   try {
     // Build API request payload
     const payload = {
-      canvas_width: 7200, // Match ImgMap.jpg dimensions
-      canvas_height: 4800,
+      canvas_width: 3600, // Reduced from 7200 to prevent OOM kills
+      canvas_height: 2400, // Reduced from 4800 to prevent OOM kills
       cell_size: currentState.cell_size,
       low: currentState.brightness_low,
       high: currentState.brightness_high,

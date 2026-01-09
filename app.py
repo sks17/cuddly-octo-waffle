@@ -20,6 +20,7 @@ from scipy.ndimage import gaussian_filter
 import io
 import logging
 import os
+import gc  # For explicit garbage collection to manage memory
 
 # Configure logging for production
 logging.basicConfig(level=logging.INFO)
@@ -34,6 +35,7 @@ CORS(app,
          "https://sakshamsingh.dev",
          "https://www.sakshamsingh.dev", 
          "https://far-flare.vercel.app",
+         "https://far-flare-g4yd4rvng-sks17s-projects.vercel.app", # Actual Vercel URL
          "http://localhost:4321",  # Local Astro dev server
          "http://localhost:4322",  # Local Astro dev server (alternate port)
          "http://localhost:4323",  # Local Astro dev server (alternate port)
@@ -505,6 +507,9 @@ def generate_wallpaper():
 
             logger.info(f"Successfully generated {params['canvas_width']}x{params['canvas_height']} wallpaper")
             
+            # Force garbage collection to free memory after heavy operations
+            gc.collect()
+            
             # Return image directly via send_file
             return send_file(
                 img_buffer,
@@ -562,6 +567,10 @@ def generate_render_spec():
         )
         
         logger.info(f"Successfully generated render spec with {len(spec['blocks'])} blocks")
+        
+        # Force garbage collection to free memory after heavy operations
+        gc.collect()
+        
         return jsonify(spec)
 
     except Exception as e:

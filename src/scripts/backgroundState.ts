@@ -24,12 +24,20 @@ import {
 } from './backgroundCache';
 import { generateDistributedBackground } from './backgroundRenderer';
 
-// Detect localhost for development vs production
-const isLocalhost = typeof window !== 'undefined' && window.location.hostname === 'localhost';
+// CRITICAL: Localhost frontend must NEVER call Fly.io to avoid CORS errors
+// Explicit API base selection - no env var fallback that could cause CORS
+let API_BASE: string;
+if (typeof window !== 'undefined' && (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1")) {
+  API_BASE = "http://localhost:5000/api";
+} else {
+  API_BASE = "https://mathematical-wallpaper-api.fly.dev/api";
+}
+console.log(`API_BASE resolved to: ${API_BASE}`);
 
-// Use environment variable for API URL - falls back based on environment
-const API_BASE = import.meta.env.PUBLIC_API_URL || 
-  (isLocalhost ? 'http://localhost:5000/api' : 'https://mathematical-wallpaper-api.fly.dev/api');
+// Enable distributed rendering (can be toggled for testing)
+const USE_DISTRIBUTED_RENDERING = import.meta.env.PUBLIC_USE_DISTRIBUTED_RENDERING === 'true' || false;
+
+const STORAGE_KEY = 'background-theme-config';
 
 // Robust fetch helper for localhost development - handles cold starts and network issues
 async function fetchWithRetry(url: string, options: RequestInit, maxRetries: number = 3): Promise<Response> {
@@ -75,11 +83,6 @@ async function fetchWithRetry(url: string, options: RequestInit, maxRetries: num
   }
   throw new Error('Max retries exceeded');
 }
-
-// Enable distributed rendering (can be toggled for testing)
-const USE_DISTRIBUTED_RENDERING = import.meta.env.PUBLIC_USE_DISTRIBUTED_RENDERING === 'true' || false;
-
-const STORAGE_KEY = 'background-theme-config';
 
 // Background configuration state (single source of truth)
 export interface BackgroundConfig {

@@ -315,12 +315,14 @@ export async function generateDistributedBackground(params: any): Promise<Blob> 
   // Add output_format parameter to request render spec
   const specParams = { ...params, output_format: 'spec' };
   
-  // Detect localhost for development vs production
-  const isLocalhost = typeof window !== 'undefined' && window.location.hostname === 'localhost';
-  
-  // Determine API endpoint
-  const apiUrl = import.meta.env.PUBLIC_API_URL || 
-    (isLocalhost ? 'http://localhost:5000' : 'https://mathematical-wallpaper-api.fly.dev');
+  // CRITICAL: Localhost frontend must NEVER call Fly.io to avoid CORS errors
+  // Explicit API base selection - no env var fallback that could cause CORS
+  let apiUrl: string;
+  if (typeof window !== 'undefined' && (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1")) {
+    apiUrl = "http://localhost:5000";
+  } else {
+    apiUrl = "https://mathematical-wallpaper-api.fly.dev";
+  }
   
   // Fetch render specification from backend
   const response = await fetchWithRetry(`${apiUrl}/api/generate`, {

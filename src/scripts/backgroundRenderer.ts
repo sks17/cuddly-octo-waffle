@@ -315,8 +315,10 @@ export async function canvasToBlob(canvas: HTMLCanvasElement): Promise<Blob> {
 /**
  * Apply alpha mapping from ImgMap.jpg data (matches traditional generator behavior)
  * 
- * This function applies transparency effects based on the color intensity of ImgMap.jpg,
- * exactly matching the algorithm used in the traditional Python generator.
+ * This function applies transparency effects based on the LUMINANCE of ImgMap.jpg:
+ * - Black areas in ImgMap → transparent output
+ * - White areas in ImgMap → opaque output  
+ * - Gray areas in ImgMap → semi-transparent output
  */
 function applyAlphaMapping(
   ctx: CanvasRenderingContext2D,
@@ -336,7 +338,7 @@ function applyAlphaMapping(
       const mapY = Math.min(Math.floor((y / canvas.height) * alphaMap.height), alphaMap.height - 1);
       const alpha = alphaMap.alpha_values[mapY]?.[mapX] ?? 1.0;
       
-      // Apply alpha: strong colors in ImgMap → opaque canvas, weak colors → transparent
+      // Apply alpha: black areas in ImgMap → transparent, white areas → opaque
       data[pixelIndex + 3] = Math.floor(alpha * 255);
     }
   }

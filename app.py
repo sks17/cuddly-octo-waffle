@@ -290,23 +290,16 @@ def generate_determinant_canvas(canvas_width, canvas_height, low, high, cell_siz
                 if map_img.size != (canvas_width, canvas_height):
                     map_img = map_img.resize((canvas_width, canvas_height), Image.LANCZOS)
                 
-                # Convert to array and calculate alpha from color intensity
+                # Convert to array and calculate alpha from luminance (brightness)
+                # Black areas in ImgMap → transparent, white areas → opaque
                 map_array = np.asarray(map_img, dtype=np.float32)
                 r, g, b = map_array[..., 0], map_array[..., 1], map_array[..., 2]
+                
+                # Calculate perceptual luminance (sRGB standard)
                 luminance = 0.2126 * r + 0.7152 * g + 0.0722 * b
                 
-                # Calculate color intensity for alpha
-                color_intensity = np.sqrt(
-                    (r - luminance)**2 + 
-                    (g - luminance)**2 + 
-                    (b - luminance)**2
-                )
-                
-                # Normalize to 0-1 range for frontend
-                if color_intensity.max() > 0:
-                    alpha_values = (color_intensity / color_intensity.max()).tolist()
-                else:
-                    alpha_values = [[1.0 for _ in range(canvas_width)] for _ in range(canvas_height)]
+                # Normalize to 0-1 range for frontend (black=0=transparent, white=1=opaque)
+                alpha_values = (luminance / 255.0).tolist()
                     
                 alpha_map_data = {
                     "width": canvas_width,

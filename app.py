@@ -34,7 +34,9 @@ CORS(app,
          "https://sakshamsingh.dev",
          "https://www.sakshamsingh.dev", 
          "https://far-flare.vercel.app",
-         "http://localhost:4321"  # Local Astro dev server
+         "http://localhost:4321",  # Local Astro dev server
+         "http://localhost:8080",  # Local test server
+         "http://127.0.0.1:8080"   # Alternative localhost format
      ], 
      methods=["GET", "POST", "OPTIONS"], 
      allow_headers=["Content-Type"],
@@ -202,16 +204,19 @@ def generate_determinant_canvas(canvas_width, canvas_height, low, high, cell_siz
                                normalizer=0.0, hue="gray", use_determinant=True,
                                use_max=True, max_matrix_size=4, pattern="mixed",
                                blur_sigma=1.5, vignette_strength=0.3,
-                               feather_strength=0.0, gap_cells=1):
-    """Generate the main determinant visualization canvas."""
+                               feather_strength=0.0, gap_cells=1, output_format="canvas"):
+    """Generate the main determinant visualization canvas or render spec.
+    
+    Args:
+        output_format: "canvas" returns numpy array, "spec" returns render specification
+    """
     Wc = canvas_width // cell_size
     Hc = canvas_height // cell_size
 
-    canvas = np.zeros((canvas_height, canvas_width, 3), dtype=np.uint8)
     cache = {}
     placements = []
 
-    # Precompute determinant range
+    # Precompute determinant range (always needed for both modes)
     all_dets = []
     for n in range(1, min(max_matrix_size + 1, min(Wc, Hc) + 1)):
         A, d = choose_matrix_variant(n, low, high, use_max, cache=cache)
@@ -220,7 +225,7 @@ def generate_determinant_canvas(canvas_width, canvas_height, low, high, cell_siz
     det_min = min(all_dets) if all_dets else 0.0
     det_max = max(all_dets) if all_dets else 0.0
 
-    # Pattern selection
+    # Pattern selection (identical logic)
     if pattern == "uniform":
         size_weights = [0.1, 0.3, 0.4, 0.2]
     elif pattern == "gradient":
@@ -235,9 +240,9 @@ def generate_determinant_canvas(canvas_width, canvas_height, low, high, cell_siz
 
     margin = max(0, int(gap_cells))
     y_cell = 0
-    np.random.seed(42)
+    np.random.seed(42)  # Deterministic placement
 
-    # Layout generation
+    # Layout generation (identical logic)
     while y_cell < Hc:
         x_cell = 0
         row_height = 0
@@ -256,21 +261,67 @@ def generate_determinant_canvas(canvas_width, canvas_height, low, high, cell_siz
             n = np.random.choice(valid_sizes, p=valid_weights)
             A, det = choose_matrix_variant(n, low, high, use_max, cache=cache)
 
-            placements.append({
+            # Store placement info
+            placement = {
                 "A": A, "det": det, "n": n,
-                "x_cell": x_cell, "y_cell": y_cell
-            })
+                "x_cell": x_cell, "y_cell": y_cell,
+                "x_pixel": x_cell * cell_size,
+                "y_pixel": y_cell * cell_size,
+                "width_pixel": n * cell_size,
+                "height_pixel": n * cell_size
+            }
+            placements.append(placement)
 
             row_height = max(row_height, n)
             x_cell += n + margin
 
         y_cell += row_height + margin
 
-    # Render blocks onto canvas
+    # Return render spec instead of rendering pixels
+    if output_format == "spec":
+        return {
+            "canvas": {
+                "width": int(canvas_width),
+                "height": int(canvas_height),
+                "cell_size": int(cell_size)
+            },
+            "visual": {
+                "hue": str(hue),
+                "normalizer": float(normalizer),
+                "low": int(low),
+                "high": int(high),
+                "blur_sigma": float(blur_sigma),
+                "vignette_strength": float(vignette_strength),
+                "feather_strength": float(feather_strength),
+                "use_determinant": bool(use_determinant),
+                "use_max": bool(use_max)
+            },
+            "determinant_range": {
+                "min": float(det_min),
+                "max": float(det_max)
+            },
+            "blocks": [
+                {
+                    "x": int(p["x_pixel"]),
+                    "y": int(p["y_pixel"]),
+                    "width": int(p["width_pixel"]),
+                    "height": int(p["height_pixel"]),
+                    "matrix": p["A"].tolist() if hasattr(p["A"], 'tolist') else p["A"],  # Handle both numpy arrays and lists
+                    "determinant": float(p["det"]),  # Ensure float for JSON
+                    "size": int(p["n"])
+                }
+                for p in placements
+            ]
+        }
+
+    # Original canvas rendering path (unchanged)
+    canvas = np.zeros((canvas_height, canvas_width, 3), dtype=np.uint8)
+    
+    # Render blocks onto canvas (existing logic)
     for p in placements:
         A, det, n = p["A"], p["det"], p["n"]
-        x0 = p["x_cell"] * cell_size
-        y0 = p["y_cell"] * cell_size
+        x0 = p["x_pixel"]
+        y0 = p["y_pixel"]
 
         block = _matrix_to_color_block(
             A, det, low, high, cell_size, normalizer, hue,
@@ -353,9 +404,9 @@ def health_check():
 @app.route('/api/generate', methods=['POST'])
 def generate_wallpaper():
     """
-    Generate a mathematical wallpaper and return it directly as PNG.
+    Generate a mathematical wallpaper and return it as PNG or render spec.
     
-    CHANGED: No filesystem writes - image generated and returned in memory
+    CHANGED: Now supports both PNG output and render specification format
     """
     try:
         data = request.get_json() or {}
@@ -380,29 +431,100 @@ def generate_wallpaper():
             "feather_strength": float(data.get("feather_strength", 0.0))
         }
 
-        # Generate RGBA image in memory
-        rgba_array = generate_canvas_with_alpha(**params)
-        
-        # Convert NumPy array to PIL Image
-        image = Image.fromarray(rgba_array, 'RGBA')
-        
-        # Save to memory buffer instead of filesystem
-        img_buffer = io.BytesIO()
-        image.save(img_buffer, format='PNG', optimize=True)
-        img_buffer.seek(0)
+        # Check if render spec is requested
+        output_format = data.get("output_format", "png")  # 'png' or 'spec'
 
-        logger.info(f"Successfully generated {params['canvas_width']}x{params['canvas_height']} wallpaper")
+        if output_format == "spec":
+            # Generate and return render specification
+            spec = generate_determinant_canvas(
+                params["canvas_width"], params["canvas_height"],
+                params["low"], params["high"], params["cell_size"],
+                params["normalizer"], params["hue"], params["use_determinant"],
+                params["use_max"], params["max_matrix_size"], params["pattern"],
+                params["blur_sigma"], params["vignette_strength"],
+                params["feather_strength"], params["gap_cells"],
+                output_format="spec"
+            )
+            
+            logger.info(f"Successfully generated render spec with {len(spec['blocks'])} blocks")
+            return jsonify(spec)
         
-        # Return image directly via send_file
-        return send_file(
-            img_buffer,
-            mimetype='image/png',
-            as_attachment=False,
-            download_name=f"wallpaper_{params['hue']}_{params['canvas_width']}x{params['canvas_height']}.png"
-        )
+        else:
+            # Original PNG generation path
+            # Generate RGBA image in memory
+            rgba_array = generate_canvas_with_alpha(**params)
+            
+            # Convert NumPy array to PIL Image
+            image = Image.fromarray(rgba_array, 'RGBA')
+            
+            # Save to memory buffer instead of filesystem
+            img_buffer = io.BytesIO()
+            image.save(img_buffer, format='PNG', optimize=True)
+            img_buffer.seek(0)
+
+            logger.info(f"Successfully generated {params['canvas_width']}x{params['canvas_height']} wallpaper")
+            
+            # Return image directly via send_file
+            return send_file(
+                img_buffer,
+                mimetype='image/png',
+                as_attachment=False,
+                download_name=f"wallpaper_{params['hue']}_{params['canvas_width']}x{params['canvas_height']}.png"
+            )
 
     except Exception as e:
         logger.error(f"Error generating wallpaper: {str(e)}")
+        return jsonify({
+            "success": False,
+            "error": str(e)
+        }), 500
+
+@app.route('/api/render-spec', methods=['POST'])
+def generate_render_spec():
+    """
+    Generate a mathematical wallpaper render specification.
+    
+    Returns JSON instead of image data - for distributed rendering.
+    """
+    try:
+        data = request.get_json() or {}
+        logger.info(f"Generating render spec with params: {data}")
+
+        # Extract parameters with defaults (same as main endpoint)
+        params = {
+            "canvas_width": int(data.get("canvas_width", 1920)),
+            "canvas_height": int(data.get("canvas_height", 1080)),
+            "cell_size": int(data.get("cell_size", 12)),
+            "low": int(data.get("low", 0)),
+            "high": int(data.get("high", 1)),
+            "normalizer": float(data.get("normalizer", 0.5)),
+            "hue": str(data.get("hue", "purple")),
+            "use_determinant": bool(data.get("use_determinant", True)),
+            "use_max": bool(data.get("use_max", True)),
+            "max_matrix_size": int(data.get("max_matrix_size", 4)),
+            "pattern": str(data.get("pattern", "mixed")),
+            "blur_sigma": float(data.get("blur_sigma", 1.5)),
+            "vignette_strength": float(data.get("vignette_strength", 0.25)),
+            "gap_cells": int(data.get("gap_cells", 1)),
+            "feather_strength": float(data.get("feather_strength", 0.0))
+        }
+
+        # Generate render specification
+        spec = generate_determinant_canvas(
+            params["canvas_width"], params["canvas_height"],
+            params["low"], params["high"], params["cell_size"],
+            params["normalizer"], params["hue"], params["use_determinant"],
+            params["use_max"], params["max_matrix_size"], params["pattern"],
+            params["blur_sigma"], params["vignette_strength"],
+            params["feather_strength"], params["gap_cells"],
+            output_format="spec"
+        )
+        
+        logger.info(f"Successfully generated render spec with {len(spec['blocks'])} blocks")
+        return jsonify(spec)
+
+    except Exception as e:
+        logger.error(f"Error generating render spec: {str(e)}")
         return jsonify({
             "success": False,
             "error": str(e)
@@ -414,11 +536,22 @@ def get_api_info():
     return jsonify({
         "name": "Mathematical Wallpaper Generator API",
         "description": "Generates mathematical visualizations using matrix determinants",
-        "version": "1.0.0",
+        "version": "1.1.0",
         "endpoints": {
             "/health": "Health check",
-            "/api/generate": "Generate wallpaper (POST)",
+            "/api/generate": "Generate wallpaper PNG or render spec (POST)",
+            "/api/render-spec": "Generate render specification only (POST)",
             "/api/info": "API information (GET)"
+        },
+        "distributed_rendering": {
+            "description": "API supports distributed rendering via render specifications",
+            "output_formats": ["png", "spec"],
+            "render_spec_format": {
+                "canvas": {"width": "int", "height": "int", "cell_size": "int"},
+                "visual": {"hue": "string", "normalizer": "float", "blur_sigma": "float", "vignette_strength": "float", "etc": "..."},
+                "determinant_range": {"min": "float", "max": "float"},
+                "blocks": [{"x": "int", "y": "int", "width": "int", "height": "int", "matrix": "array", "determinant": "float", "size": "int"}]
+            }
         },
         "parameters": {
             "canvas_width": {"type": "int", "default": 1920, "description": "Canvas width in pixels"},

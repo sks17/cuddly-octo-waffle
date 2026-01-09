@@ -27,6 +27,13 @@ primary_region = 'sjc'
     grace_period = '10s'
     method = 'GET'
     path = '/health'
+  
+  [[http_service.checks]]
+    interval = '60s'
+    timeout = '10s'
+    grace_period = '15s'
+    method = 'GET'
+    path = '/api/info'
 
 [[vm]]
   memory = '512mb'

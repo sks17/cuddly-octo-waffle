@@ -8,8 +8,8 @@
  * Data Flow:
  * 1. Popup UI changes → updateState()
  * 2. State change → generateBackground()
- * 3. API call → Server generates wallpaper
- * 4. Response → updateBackgroundImage()
+ * 3. API call → Server generates wallpaper OR render spec
+ * 4. Response → Server PNG OR Client-side rendering
  * 5. DOM update → Background visible
  * 6. Accent theme updates based on hue
  */
@@ -22,11 +22,13 @@ import {
   clearCache,
   listCachedBackgrounds 
 } from './backgroundCache';
+import { generateDistributedBackground } from './backgroundRenderer';
 
-// Use environment-based API URL for production deployment
-const API_BASE = import.meta.env.PROD 
-  ? 'https://mathematical-wallpaper-api.fly.dev/api'  // Production Fly.io URL
-  : 'http://localhost:5000/api';  // Development URL
+// Use environment variable for API URL - falls back to production if not set
+const API_BASE = import.meta.env.PUBLIC_API_URL || 'https://mathematical-wallpaper-api.fly.dev/api';
+
+// Enable distributed rendering (can be toggled for testing)
+const USE_DISTRIBUTED_RENDERING = import.meta.env.PUBLIC_USE_DISTRIBUTED_RENDERING === 'true' || false;
 
 const STORAGE_KEY = 'background-theme-config';
 
@@ -156,6 +158,7 @@ export function isLoading(): boolean {
 
 /**
  * Generate background from current state with caching
+ * Supports both traditional server PNG generation and distributed rendering
  */
 export async function generateBackground(): Promise<void> {
   if (isGenerating) {
@@ -173,7 +176,8 @@ export async function generateBackground(): Promise<void> {
   }
 
   isGenerating = true;
-  console.log('🎨 Starting background generation with state:', currentState);
+  console.log(`🎨 Starting background generation (${USE_DISTRIBUTED_RENDERING ? 'distributed' : 'traditional'}) with state:`, currentState);
+  console.log('🌐 API_BASE configured as:', API_BASE);
 
   try {
     // Build API request payload
@@ -192,25 +196,47 @@ export async function generateBackground(): Promise<void> {
       blur_sigma: currentState.blur_sigma,
       vignette_strength: currentState.vignette_strength,
       gap_cells: currentState.gap_cells,
+      feather_strength: currentState.feathered ? 0.1 : 0.0,
       filename: `hero_${Date.now()}`
     };
 
-    console.log('📡 Sending API request:', payload);
+    let imageBlob: Blob;
 
-    const response = await fetch(`${API_BASE}/generate`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(payload),
-    });
+    if (USE_DISTRIBUTED_RENDERING) {
+      // Use distributed rendering (render spec + client-side canvas)
+      console.log('📡 Using distributed rendering');
+      imageBlob = await generateDistributedBackground(payload);
+    } else {
+      // Traditional server-side PNG generation
+      console.log('📡 Sending traditional API request to:', `${API_BASE}/generate`);
+      console.log('📡 Request payload:', payload);
 
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      const response = await fetch(`${API_BASE}/generate`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      });
+
+      console.log('📡 Response status:', response.status, response.statusText);
+      console.log('📡 Response content-type:', response.headers.get('content-type'));
+
+      if (!response.ok) {
+        const errorText = await response.text().catch(() => 'Unknown error');
+        console.error('❌ API Error Response:', errorText);
+        throw new Error(`API Error ${response.status}: ${response.statusText} - ${errorText}`);
+      }
+
+      // Ensure response is actually an image
+      const contentType = response.headers.get('content-type');
+      if (!contentType?.startsWith('image/')) {
+        throw new Error('API returned non-image response');
+      }
+
+      imageBlob = await response.blob();
     }
 
-    // Response is now a PNG image blob, not JSON
-    const imageBlob = await response.blob();
     const imageUrl = URL.createObjectURL(imageBlob);
     
     console.log('✅ Background generated successfully');
@@ -225,6 +251,16 @@ export async function generateBackground(): Promise<void> {
     
   } catch (error) {
     console.error('❌ Background generation failed:', error);
+    
+    // Differentiate error types for better debugging
+    if (error instanceof TypeError) {
+      console.error('❌ Network error - check if API server is accessible');
+    } else if (error.message?.includes('API Error')) {
+      console.error('❌ API returned an error response');
+    } else {
+      console.error('❌ Unknown error during background generation');
+    }
+    
     throw error;
   } finally {
     isGenerating = false;

@@ -11,6 +11,51 @@
  * - Visual output must be identical to server-side rendering
  */
 
+// Robust fetch helper for localhost development - handles cold starts and network issues
+async function fetchWithRetry(url: string, options: RequestInit, maxRetries: number = 3): Promise<Response> {
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    console.log(`[distributed-render] fetch attempt ${attempt + 1}/${maxRetries + 1}: ${url}`);
+    
+    try {
+      // Setup timeout with AbortController
+      const controller = new AbortController();
+      const timeoutMs = 30000; // 30 second timeout
+      const timeout = setTimeout(() => {
+        controller.abort();
+        console.log(`[distributed-render] fetch timeout after ${timeoutMs}ms`);
+      }, timeoutMs);
+      
+      const response = await fetch(url, {
+        ...options,
+        signal: controller.signal
+      });
+      
+      clearTimeout(timeout);
+      console.log(`[distributed-render] backend responded: ${response.status} ${response.statusText}`);
+      return response;
+      
+    } catch (error) {
+      const isNetworkError = error instanceof Error && 
+        (error.name === 'AbortError' || error.name === 'TypeError' || error.message.includes('fetch'));
+      
+      if (attempt === maxRetries) {
+        console.error(`[distributed-render] fetch failed after ${maxRetries + 1} attempts:`, error);
+        throw error;
+      }
+      
+      if (isNetworkError) {
+        const delay = Math.pow(2, attempt) * 1000; // Exponential backoff: 1s, 2s, 4s
+        console.log(`[distributed-render] backend warming up, retrying in ${delay}ms (${attempt + 1}/${maxRetries})`);
+        await new Promise(resolve => setTimeout(resolve, delay));
+      } else {
+        // Don't retry non-network errors (4xx responses, etc.)
+        throw error;
+      }
+    }
+  }
+  throw new Error('Max retries exceeded');
+}
+
 export interface RenderSpec {
   canvas: {
     width: number;
@@ -270,11 +315,15 @@ export async function generateDistributedBackground(params: any): Promise<Blob> 
   // Add output_format parameter to request render spec
   const specParams = { ...params, output_format: 'spec' };
   
+  // Detect localhost for development vs production
+  const isLocalhost = typeof window !== 'undefined' && window.location.hostname === 'localhost';
+  
   // Determine API endpoint
-  const apiUrl = import.meta.env.PUBLIC_API_URL || 'https://mathematical-wallpaper-api.fly.dev';
+  const apiUrl = import.meta.env.PUBLIC_API_URL || 
+    (isLocalhost ? 'http://localhost:5000' : 'https://mathematical-wallpaper-api.fly.dev');
   
   // Fetch render specification from backend
-  const response = await fetch(`${apiUrl}/api/generate`, {
+  const response = await fetchWithRetry(`${apiUrl}/api/generate`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',

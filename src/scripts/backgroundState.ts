@@ -24,8 +24,57 @@ import {
 } from './backgroundCache';
 import { generateDistributedBackground } from './backgroundRenderer';
 
-// Use environment variable for API URL - falls back to production if not set
-const API_BASE = import.meta.env.PUBLIC_API_URL || 'https://mathematical-wallpaper-api.fly.dev/api';
+// Detect localhost for development vs production
+const isLocalhost = typeof window !== 'undefined' && window.location.hostname === 'localhost';
+
+// Use environment variable for API URL - falls back based on environment
+const API_BASE = import.meta.env.PUBLIC_API_URL || 
+  (isLocalhost ? 'http://localhost:5000/api' : 'https://mathematical-wallpaper-api.fly.dev/api');
+
+// Robust fetch helper for localhost development - handles cold starts and network issues
+async function fetchWithRetry(url: string, options: RequestInit, maxRetries: number = 3): Promise<Response> {
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    console.log(`[background] fetch attempt ${attempt + 1}/${maxRetries + 1}: ${url}`);
+    
+    try {
+      // Setup timeout with AbortController
+      const controller = new AbortController();
+      const timeoutMs = 30000; // 30 second timeout
+      const timeout = setTimeout(() => {
+        controller.abort();
+        console.log(`[background] fetch timeout after ${timeoutMs}ms`);
+      }, timeoutMs);
+      
+      const response = await fetch(url, {
+        ...options,
+        signal: controller.signal
+      });
+      
+      clearTimeout(timeout);
+      console.log(`[background] backend responded: ${response.status} ${response.statusText}`);
+      return response;
+      
+    } catch (error) {
+      const isNetworkError = error instanceof Error && 
+        (error.name === 'AbortError' || error.name === 'TypeError' || error.message.includes('fetch'));
+      
+      if (attempt === maxRetries) {
+        console.error(`[background] fetch failed after ${maxRetries + 1} attempts:`, error);
+        throw error;
+      }
+      
+      if (isNetworkError) {
+        const delay = Math.pow(2, attempt) * 1000; // Exponential backoff: 1s, 2s, 4s
+        console.log(`[background] backend warming up, retrying in ${delay}ms (${attempt + 1}/${maxRetries})`);
+        await new Promise(resolve => setTimeout(resolve, delay));
+      } else {
+        // Don't retry non-network errors (4xx responses, etc.)
+        throw error;
+      }
+    }
+  }
+  throw new Error('Max retries exceeded');
+}
 
 // Enable distributed rendering (can be toggled for testing)
 const USE_DISTRIBUTED_RENDERING = import.meta.env.PUBLIC_USE_DISTRIBUTED_RENDERING === 'true' || false;
@@ -211,7 +260,7 @@ export async function generateBackground(): Promise<void> {
       console.log('📡 Sending traditional API request to:', `${API_BASE}/generate`);
       console.log('📡 Request payload:', payload);
 
-      const response = await fetch(`${API_BASE}/generate`, {
+      const response = await fetchWithRetry(`${API_BASE}/generate`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -255,7 +304,7 @@ export async function generateBackground(): Promise<void> {
     // Differentiate error types for better debugging
     if (error instanceof TypeError) {
       console.error('❌ Network error - check if API server is accessible');
-    } else if (error.message?.includes('API Error')) {
+    } else if (error instanceof Error && error.message?.includes('API Error')) {
       console.error('❌ API returned an error response');
     } else {
       console.error('❌ Unknown error during background generation');

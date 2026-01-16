@@ -1,0 +1,253 @@
+---
+/**
+ * Data Science Visual Component
+ * 
+ * Custom visual for high school data science projects.
+ * Three-column layout showcasing description, logo, and tools.
+ */
+---
+
+<div class="data-science-visual">
+  <div class="ds-container">
+    <!-- Left: Logo -->
+    <div class="ds-logo-col">
+      <div class="logo-wrapper">
+        <img src="/assets/DataScienceLogo.png" alt="Data Science Logo" class="ds-logo" />
+      </div>
+    </div>
+
+    <!-- Center: Description -->
+    <div class="ds-text-col">
+      <div class="ds-description">
+        <h2 class="ds-title">High School Data Science</h2>
+        <p>Data science projects I made for assignments in high school.</p>
+      </div>
+    </div>
+
+    <!-- Right: Tools -->
+    <div class="ds-tools-col">
+      <div class="ds-tools">
+        <h3 class="tools-title">Tools</h3>
+        <div class="tools-grid">
+          <div class="tool-item">Python</div>
+          <div class="tool-item">Pandas</div>
+          <div class="tool-item">GeoPandas</div>
+          <div class="tool-item">NumPy</div>
+          <div class="tool-item">Scikit-learn</div>
+          <div class="tool-item">Matplotlib</div>
+          <div class="tool-item">Seaborn</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  .data-science-visual {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .ds-container {
+    display: grid;
+    grid-template-columns: 380px 1fr 220px;
+    gap: 2.5rem;
+    align-items: center;
+    max-width: 85%;
+    width: 100%;
+    padding: 0.5rem 2rem;
+  }
+
+  .ds-text-col {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .ds-title {
+    font-size: 2.2rem;
+    font-weight: 700;
+    color: white;
+    margin: 0 0 0.75rem 0;
+    line-height: 1.2;
+    letter-spacing: -0.02em;
+  }
+
+  .ds-description {
+    color: rgba(255, 255, 255, 0.95);
+  }
+
+  .ds-description p {
+    font-size: 1.05rem;
+    line-height: 1.65;
+    margin: 0;
+  }
+
+  .ds-logo-col {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .logo-wrapper {
+    background: white;
+    border-radius: 16px;
+    padding: 2rem;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .ds-logo {
+    width: 100%;
+    max-width: 300px;
+    height: auto;
+    display: block;
+  }
+
+  .ds-tools-col {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .ds-tools {
+    width: 100%;
+  }
+
+  .tools-title {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.9);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 0.75rem;
+    border-bottom: 2px solid rgba(255, 255, 255, 0.3);
+    padding-bottom: 0.4rem;
+  }
+
+  .tools-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .tool-item {
+    background: rgba(52, 152, 219, 0.2);
+    border: 1px solid rgba(52, 152, 219, 0.4);
+    border-radius: 6px;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.68rem;
+    font-weight: 500;
+    color: white;
+    text-align: center;
+    transition: all 0.2s ease;
+  }
+
+  .tool-item:hover {
+    background: rgba(52, 152, 219, 0.35);
+    border-color: rgba(52, 152, 219, 0.6);
+    transform: translateX(3px);
+  }
+
+  @media (max-width: 1400px) {
+    .ds-container {
+      grid-template-columns: 320px 1fr 200px;
+      max-width: 90%;
+    }
+
+    .ds-title {
+      font-size: 2rem;
+    }
+
+    .ds-description p {
+      font-size: 1rem;
+    }
+
+    .ds-logo {
+      max-width: 260px;
+    }
+  }
+
+  @media (max-width: 1200px) {
+    .ds-container {
+      grid-template-columns: 280px 1fr 180px;
+      gap: 2rem;
+    }
+
+    .ds-title {
+      font-size: 1.8rem;
+    }
+
+    .ds-description p {
+      font-size: 0.95rem;
+    }
+
+    .ds-logo {
+      max-width: 220px;
+    }
+  }
+
+  @media (max-width: 1000px) {
+    .ds-container {
+      grid-template-columns: 1fr;
+      gap: 1.5rem;
+      max-width: 95%;
+      padding: 2rem 1.5rem;
+    }
+
+    .ds-text-col {
+      order: 1;
+      text-align: center;
+    }
+
+    .ds-logo-col {
+      order: 2;
+    }
+
+    .ds-tools-col {
+      order: 3;
+      max-width: 320px;
+      margin: 0 auto;
+    }
+
+    .ds-title {
+      font-size: 2rem;
+    }
+
+    .tools-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 0.5rem;
+    }
+  }
+
+  @media (max-width: 600px) {
+    .ds-container {
+      padding: 1.5rem 1rem;
+    }
+
+    .ds-title {
+      font-size: 1.6rem;
+    }
+
+    .ds-description p {
+      font-size: 0.9rem;
+    }
+
+    .ds-logo {
+      max-width: 200px;
+    }
+
+    .logo-wrapper {
+      padding: 1.5rem;
+    }
+  }
+</style>

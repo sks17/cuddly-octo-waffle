@@ -31,6 +31,8 @@ let prefersReducedMotion = false;
 let parallaxAnimationId: number | null = null;
 let scrollAnimationId: number | null = null;
 let isScrolling = false;
+let lastScrollY = 0;
+let scrollStableCount = 0;
 
 function updateFocusState(): void {
   const projectSections = document.querySelectorAll<HTMLElement>('.project-section');
@@ -136,15 +138,60 @@ function isInProjectsArea(): boolean {
   
   const rect = container.getBoundingClientRect();
   const viewportHeight = window.innerHeight;
+  const viewportCenter = viewportHeight / 2;
   
-  // Consider "in area" when container is significantly visible
-  const visibleTop = Math.max(rect.top, 0);
-  const visibleBottom = Math.min(rect.bottom, viewportHeight);
-  const visibleHeight = Math.max(0, visibleBottom - visibleTop);
-  const visibilityRatio = visibleHeight / viewportHeight;
+  // CRITICAL: Only activate when section is ergonomically centered
+  // Require at least one project to be positioned at or very near viewport center
   
-  // Only activate when container occupies at least 70% of viewport (increased from 50%)
-  return visibilityRatio > 0.7;
+  const projectSections = container.querySelectorAll<HTMLElement>('.project-section');
+  const targetPosition = viewportCenter - (viewportHeight * 0.05); // Very close to center
+  
+  // HYSTERESIS: Use wider tolerance when already locked to prevent twitching
+  const isAlreadyLocked = (currentState === ScrollState.LOCKED || currentState === ScrollState.TRANSITIONING);
+  
+  for (let i = 0; i < projectSections.length; i++) {
+    const section = projectSections[i];
+    const sectionRect = section.getBoundingClientRect();
+    const sectionCenter = sectionRect.top + sectionRect.height / 2;
+    
+    // Determine if this is first or last project (needs stricter requirements)
+    const isFirstProject = i === 0;
+    const isLastProject = i === projectSections.length - 1;
+    
+    // For first/last projects, require stricter centering (10% instead of 15%)
+    // When already locked, use 20% wider tolerance to prevent twitching
+    let maxDistance = (isFirstProject || isLastProject) 
+      ? viewportHeight * 0.10 
+      : viewportHeight * 0.15;
+    
+    if (isAlreadyLocked) {
+      maxDistance *= 1.5; // 50% wider tolerance when locked
+    }
+    
+    // Project center must be very close to target position
+    const distanceFromTarget = Math.abs(sectionCenter - targetPosition);
+    
+    if (distanceFromTarget <= maxDistance) {
+      // Additional verification: ensure the project is actually substantially visible
+      const visibleTop = Math.max(sectionRect.top, 0);
+      const visibleBottom = Math.min(sectionRect.bottom, viewportHeight);
+      const visibleHeight = Math.max(0, visibleBottom - visibleTop);
+      const projectVisibilityRatio = visibleHeight / sectionRect.height;
+      
+      // First/last projects need higher visibility (90% vs 80%)
+      // When already locked, reduce visibility requirement to prevent exit
+      let requiredVisibility = (isFirstProject || isLastProject) ? 0.90 : 0.80;
+      if (isAlreadyLocked) {
+        requiredVisibility *= 0.85; // Reduce by 15% when locked
+      }
+      
+      if (projectVisibilityRatio >= requiredVisibility) {
+        return true;
+      }
+    }
+  }
+  
+  return false;
 }
 
 function findClosestProjectIndex(): number {
@@ -217,6 +264,32 @@ function handleStateTransitions(): void {
 }
 
 function handleWheel(event: WheelEvent): void {
+  // First check: is the cursor actually over the projects container?
+  const container = document.querySelector('.projects-container');
+  if (!container) return;
+  
+  const containerRect = container.getBoundingClientRect();
+  const mouseX = event.clientX;
+  const mouseY = event.clientY;
+  
+  // Only process wheel events if cursor is within the projects container bounds
+  const isMouseOverContainer = (
+    mouseX >= containerRect.left &&
+    mouseX <= containerRect.right &&
+    mouseY >= containerRect.top &&
+    mouseY <= containerRect.bottom
+  );
+  
+  if (!isMouseOverContainer) {
+    return; // Allow native scroll when mouse is not over projects
+  }
+  
+  // Second check: is the section positioned optimally for project navigation?
+  // Even if cursor is over projects, allow normal scroll if section not centered
+  if (!isInProjectsArea()) {
+    return; // Allow native scroll when section is not optimally positioned
+  }
+  
   handleStateTransitions();
   
   // Free scrolling in IDLE or ENTERING states
@@ -318,7 +391,28 @@ export function initProjectFocus(): void {
     }
     
     scrollAnimationId = requestAnimationFrame(() => {
-      handleStateTransitions();
+      const currentScrollY = window.scrollY;
+      
+      // Detect if scroll position is stable (no movement)
+      if (Math.abs(currentScrollY - lastScrollY) < 0.5) {
+        scrollStableCount++;
+      } else {
+        scrollStableCount = 0;
+      }
+      lastScrollY = currentScrollY;
+      
+      // Only check state transitions if:
+      // 1. Not in LOCKED state, OR
+      // 2. Scroll is actively changing (not stable for 3+ frames)
+      const shouldCheckTransitions = (
+        currentState !== ScrollState.LOCKED || 
+        scrollStableCount < 3
+      );
+      
+      if (shouldCheckTransitions) {
+        handleStateTransitions();
+      }
+      
       applyParallax();
       scrollAnimationId = null;
     });

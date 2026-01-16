@@ -1,53 +1,71 @@
 ---
 title: Paper Pigeon
-publishDate: 2024-11-15 00:00:00
+publishDate: 2025-11-15 00:00:00
 img: /assets/PaperPigeonDemo.gif
 img_alt: Paper Pigeon interactive 3D visualization of research network
 description: |
-  A 3D research visualization platform that maps the University of Washington Allen School's research output. Explore researcher networks, discover papers, and experience data through immersive VR—powered by React, AWS Bedrock AI, and WebGL.
+  A 3D research visualization system for exploring the University of Washington Allen School’s research ecosystem.
 tags:
+  - SinghDevs
   - React 19
   - TypeScript
   - 3D Visualization
   - AWS
   - AI/RAG
+  - Dubhacks '25! AWS track
 ---
 
-## 🌟 Overview
+_Please feel free to contribute to the github for this project! Right now, I'm working on create a drag-and-drop system, web scraper, and architecture for a n8n system, allowing a user to create a network for any research system. I also aim to do statistical analyses on given data_
 
-Paper Pigeon transforms research discovery into an interactive experience. Navigate a force-directed graph of researchers, labs, and papers. Upload your resume to find collaborators. Ask questions about papers with AI-powered answers. Step into VR to walk through your research network.
+## Overview
 
-## ✨ Core Features
+Paper Pigeon is a research exploration tool built around a force-directed graph of researchers, labs, and papers from the University of Washington Allen School.  
+Instead of treating research discovery as a list or search problem, the system models relationships explicitly and lets structure emerge visually.
 
-**Interactive 3D Graph Visualization**  
-Force-directed graph powered by 3d-force-graph and Three.js. Click, drag, and explore—every researcher and paper is just a gesture away. Pre-computed static cache ensures instant loads without database queries.
+The graph can be explored directly, filtered by topic or lab, and queried through a lightweight AI layer. There is also an optional resume-matching path that compares a user’s background against the existing research graph.
 
-**Resume Semantic Matching**  
-Upload your resume and let AWS Bedrock AI identify researchers whose work aligns with your experience and interests. Intelligent recommendations drive discovery.
+A live demo is available here: https://paper-pigeon-deployment.vercel.app/
 
-**AI-Powered Research Chat**  
-Ask questions about any paper and get intelligent answers with direct citations. Built on AWS Bedrock's retrieval-augmented generation for accurate, grounded responses.
+## Core Components
 
-**Immersive VR Experience**  
-Put on a headset and walk through your research network in full 3D space. A-Frame VR transforms the graph into an explorable virtual environment.
+**3D Research Graph**  
+At the center of the system is a force-directed graph rendered with `3d-force-graph` and Three.js. Nodes represent researchers, papers, and labs; edges encode authorship, affiliation, and topical similarity.  
+To keep initial load times predictable, the graph is generated offline and served as static JSON rather than assembled dynamically from a database.
 
-**Researcher Profiles & Paper Search**  
-Dive into researcher bios, publication history, lab affiliations, and topic tags. Everything connected, instantly searchable.
+**Resume-Based Similarity Matching**  
+Users can upload a resume, which is embedded and compared against paper abstracts and researcher topic vectors. This step is optional and runs independently of the main graph, so it does not affect baseline performance or usability.
 
-## 🏗️ Architecture
+**Paper-Level Q&A**  
+Individual papers can be queried through a retrieval-augmented generation pipeline. Responses are grounded in the paper text and return citations rather than free-form summaries, which keeps the interaction closer to “assisted reading” than chat.
+
+**VR Rendering Path**  
+The same graph data can be rendered in a VR context using A-Frame. This is not a separate system; it reuses the existing layout and node metadata, with the primary difference being input and camera control.
+
+**Researcher Profiles and Search**  
+Each researcher node links to a profile view containing publications, lab affiliations, and topic tags. Search operates over this metadata rather than over raw graph structure.
+
+## Architecture
 
 ![Paper Pigeon Architecture](/assets/PaperPigeonFlowchart.png)
 
-The system employs a serverless, distributed architecture optimized for instant load times and cost efficiency:
+The system is structured to minimize runtime complexity and operational cost:
 
-- **Frontend**: Vite + React 19 + TypeScript
-- **3D Engine**: WebGL with Three.js and 3d-force-graph
-- **Backend**: Flask API on Vercel Serverless Functions
-- **AI**: AWS Bedrock for semantic search and resume matching
-- **Data**: DynamoDB for relationships, S3 for PDFs with secure presigned URLs
-- **Cache**: Scheduled Cloudflare Workers rebuild optimized JSON graph daily
-- **Deployment**: Full CI/CD pipeline with Playwright testing
+- **Frontend**: Vite + React 19 + TypeScript  
+- **Rendering**: WebGL via Three.js and 3d-force-graph  
+- **Backend**: Flask API deployed as Vercel Serverless Functions  
+- **AI Layer**: AWS Bedrock for embeddings and retrieval-augmented generation  
+- **Storage**: DynamoDB for relationship data, S3 for PDFs (served via presigned URLs)  
+- **Caching**: Cloudflare Workers rebuild the optimized graph JSON on a schedule  
+- **CI/CD**: Automated deployment with Playwright-based integration tests  
 
-## 🎯 What It Does
+Most user interactions are handled entirely on the client, with serverless calls reserved for AI inference and document retrieval.
 
-Paper Pigeon answers a critical question: "Who is working on what, and who should I connect with?" It synthesizes scattered research outputs into an explorable map—making discovery intuitive, visual, and serendipitous.
+## What This Is For
+
+Paper Pigeon exists to answer a simple question:
+
+> Who is working on what, and how are those efforts connected?
+
+By making relationships explicit and navigable, the system is meant to support exploration, orientation, and early-stage collaboration.
+
+

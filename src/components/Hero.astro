@@ -72,4 +72,24 @@ const { align = 'center', tagline, title, titleAttrs = {}, taglineAttrs = {} } =
 			transform: none !important;
 		}
 	}
+
+	/* ============================================================ */
+	/* MOBILE OPTIMIZATIONS - Hero component                       */
+	/* ============================================================ */
+	
+	@media (max-width: 49.9em) {
+		.hero {
+			font-size: var(--text-base);
+			padding: 0 1rem;
+		}
+
+		.title {
+			font-size: var(--text-2xl);
+			max-width: 100%;
+		}
+
+		.tagline {
+			max-width: 100%;
+		}
+	}
 </style>

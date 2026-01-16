@@ -9,50 +9,47 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 		<main class="wrapper about">
 			<Hero
 				title="About"
-				tagline="Thanks for stopping by. Read below to learn more about myself and my background."
-			>
-				<img
-					width="1553"
-					height="873"
-					src="/assets/at-work.jpg"
-					alt="Saksham Singh at work with a colleague"
-				/>
-			</Hero>
+			/>
 
 			<section>
-				<h2 class="section-title">Background</h2>
+				<h2 class="section-title">Experience</h2>
 				<div class="content">
-					<p>
-						Lorem ipsum dolor sit amet, <a href="https://astro.build/">Astro</a> makes people happy. Sed
-						do eiusmod tempor incididunt ut labore et dolore magna aliqua. Proin nibh nisl condimentum
-						id venenatis a condimentum vitae. Dapibus ultrices in iaculis nunc. Arcu odio ut sem nulla
-						pharetra diam sit amet. Diam quis enim lobortis scelerisque fermentum dui faucibus in ornare.
-					</p>
-					<p>
-						Arcu dui vivamus arcu felis bibendum ut tristique et egestas. Eget gravida cum sociis
-						natoque penatibus. Cras fermentum odio eu feugiat pretium nibh. Proin nibh nisl
-						condimentum id venenatis. Porta nibh venenatis cras sed felis eget velit. Id diam vel
-						quam elementum pulvinar etiam non.
-					</p>
-					<p>
-						Ultrices tincidunt arcu non sodales neque sodales ut. Sed enim ut sem viverra aliquet
-						eget sit amet. Lacus luctus accumsan tortor posuere ac ut consequat semper viverra.
-						Viverra accumsan in nisl nisi scelerisque eu ultrices. In massa tempor nec feugiat nisl
-						pretium fusce.
-					</p>
+					<div class="experience-card">
+						<div class="experience-header">
+							<img src="/assets/SEALLogo.jpg" alt="SEAL Logo" class="company-logo" />
+							<div class="experience-title-group">
+								<h3>Software Engineering Intern (Web)</h3>
+								<p class="company-name">University Research Lab</p>
+							</div>
+						</div>
+						<p>
+							Supported internal engineering efforts by developing and maintaining web-based tools used for data organization and operational workflows. Assisted with improving existing codebases and implementing small-scale systems to enhance usability and reliability. Worked across scripting, web technologies, and backend logic in an academic research environment.
+						</p>
+						<p class="tools">
+							<strong>Tools & Technologies:</strong> HTML/CSS/JavaScript, Java, scripting tools, content management systems, lightweight backend integrations
+						</p>
+					</div>
+
+					<div class="experience-card">
+						<div class="experience-header">
+							<img src="/assets/LiberatedLogicLogo.png" alt="Startup Logo" class="company-logo" />
+							<div class="experience-title-group">
+								<h3>Software Engineering Intern</h3>
+								<p class="company-name">Startup Environment</p>
+							</div>
+						</div>
+						<p>
+							Worked as part of a small engineering team to support the development of user-facing web and mobile products. Contributed to building application interfaces from design mockups, implementing frontend features, and supporting early deployment workflows. Gained experience working in fast-paced, iterative development cycles while collaborating with product and engineering stakeholders.
+						</p>
+						<p class="tools">
+							<strong>Tools & Technologies:</strong> JavaScript, React-based frameworks, frontend tooling, cloud deployment platforms, Git-based workflows
+						</p>
+					</div>
 				</div>
-			</section>
-			<section>
-				<h2 class="section-title">Education</h2>
-				<div class="content">
-					<p>Corporis voluptates tenetur laudantium.</p>
-				</div>
-			</section>
-			<section>
-				<h2 class="section-title">Skills</h2>
-				<div class="content">
-					<p>officia unde omnis</p>
-				</div>
+
+				<p class="contact-note">
+					If you want to know more about my roles, please... ↓
+				</p>
 			</section>
 		</main>
 
@@ -65,12 +62,6 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 		display: flex;
 		flex-direction: column;
 		gap: 3.5rem;
-	}
-
-	img {
-		margin-top: 1.5rem;
-		border-radius: 1.5rem;
-		box-shadow: var(--shadow-md);
 	}
 
 	section {
@@ -101,6 +92,79 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 		text-decoration-color: currentColor;
 	}
 
+	.experience-card {
+		background: var(--gradient-subtle);
+		border: 1px solid var(--gray-800);
+		border-radius: 1rem;
+		padding: 2rem;
+		margin-bottom: 2rem;
+		transition: all 0.3s ease;
+	}
+
+	.experience-card:hover {
+		border-color: var(--gray-700);
+		box-shadow: var(--shadow-md);
+		transform: translateY(-2px);
+	}
+
+	.experience-header {
+		display: flex;
+		align-items: center;
+		gap: 1.5rem;
+		margin-bottom: 1.5rem;
+	}
+
+	.company-logo {
+		width: 80px;
+		height: 80px;
+		object-fit: contain;
+		border-radius: 0.5rem;
+		background: white;
+		padding: 0.5rem;
+	}
+
+	.experience-title-group h3 {
+		font-size: var(--text-xl);
+		color: var(--gray-0);
+		margin: 0 0 0.25rem 0;
+		font-weight: 600;
+	}
+
+	.company-name {
+		font-size: var(--text-md);
+		color: var(--accent-light);
+		margin: 0;
+		font-weight: 500;
+	}
+
+	.experience-card p {
+		line-height: 1.7;
+		margin-bottom: 1rem;
+	}
+
+	.tools {
+		font-size: var(--text-sm);
+		color: var(--gray-400);
+		margin-top: 1.5rem;
+		padding-top: 1rem;
+		border-top: 1px solid var(--gray-800);
+	}
+
+	.tools strong {
+		color: var(--gray-300);
+	}
+
+	.contact-note {
+		grid-column: 2;
+		text-align: left;
+		font-size: var(--text-lg);
+		color: var(--gray-300);
+		margin-top: 2rem;
+		padding-top: 2rem;
+		border-top: 1px solid var(--gray-800);
+		font-style: italic;
+	}
+
 	@media (min-width: 50em) {
 		.about {
 			display: grid;
@@ -114,6 +178,15 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 		section {
 			display: contents;
 			font-size: var(--text-lg);
+		}
+
+		.company-logo {
+			width: 100px;
+			height: 100px;
+		}
+
+		.experience-title-group h3 {
+			font-size: var(--text-2xl);
 		}
 	}
 </style>

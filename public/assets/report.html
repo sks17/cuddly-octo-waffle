@@ -1,0 +1,98 @@
+
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>Pairs Trading Performance Report</title>
+        <style>
+            body { font-family: Arial, sans-serif; margin: 20px; background: #f5f5f5; }
+            h1 { color: #333; border-bottom: 3px solid steelblue; padding-bottom: 10px; }
+            h2 { color: #555; margin-top: 30px; border-bottom: 2px solid #ddd; padding-bottom: 5px; }
+            table { border-collapse: collapse; width: 100%; margin: 20px 0; background: white; }
+            th { background: steelblue; color: white; padding: 12px; text-align: left; }
+            td { padding: 10px; border-bottom: 1px solid #ddd; }
+            tr:hover { background: #f0f0f0; }
+            img { max-width: 100%; height: auto; margin: 20px 0; border: 1px solid #ddd; box-shadow: 2px 2px 5px rgba(0,0,0,0.1); }
+            .metric-value { font-weight: bold; }
+        </style>
+    </head>
+    <body>
+        <h1>Pairs Trading Performance Report</h1>
+        <p><em>Generated: 2026-01-12 14:34:51</em></p>
+        
+        <h2>Performance Metrics</h2>
+        <table>
+            <tr>
+                <th>Strategy</th>
+                <th>CAGR</th>
+                <th>Sharpe</th>
+                <th>Max Drawdown</th>
+                <th>Total Return</th>
+            </tr>
+    
+            <tr>
+                <td><strong>ou_baseline</strong></td>
+                <td class="metric-value">1.84</td>
+                <td class="metric-value">0.13</td>
+                <td class="metric-value">-23.77</td>
+                <td class="metric-value">5.45</td>
+            </tr>
+        
+            <tr>
+                <td><strong>markov_mr</strong></td>
+                <td class="metric-value">-2.36</td>
+                <td class="metric-value">-0.15</td>
+                <td class="metric-value">-31.9</td>
+                <td class="metric-value">-6.69</td>
+            </tr>
+        
+            <tr>
+                <td><strong>markov_mom</strong></td>
+                <td class="metric-value">28.62</td>
+                <td class="metric-value">1.32</td>
+                <td class="metric-value">-26.31</td>
+                <td class="metric-value">107.54</td>
+            </tr>
+        
+        </table>
+        
+        <h2>Visualizations</h2>
+    
+        <h3>Equity Curve</h3>
+        <img src="equity_curve.png" alt="equity_curve">
+        
+        <h3>Drawdown</h3>
+        <img src="drawdown.png" alt="drawdown">
+        
+        <h3>Strategy Comparison</h3>
+        <img src="strategy_comparison.png" alt="strategy_comparison">
+        
+        <h3>Zscore Aapl-Msft Ou Baseline</h3>
+        <img src="zscore_AAPL-MSFT_ou_baseline.png" alt="zscore_AAPL-MSFT_ou_baseline">
+        
+        <h3>Zscore Aapl-Msft Markov Mr</h3>
+        <img src="zscore_AAPL-MSFT_markov_mr.png" alt="zscore_AAPL-MSFT_markov_mr">
+        
+        <h3>Zscore Aapl-Msft Markov Mom</h3>
+        <img src="zscore_AAPL-MSFT_markov_mom.png" alt="zscore_AAPL-MSFT_markov_mom">
+        
+        <h3>Zscore Googl-Meta Ou Baseline</h3>
+        <img src="zscore_GOOGL-META_ou_baseline.png" alt="zscore_GOOGL-META_ou_baseline">
+        
+        <h3>Zscore Googl-Meta Markov Mr</h3>
+        <img src="zscore_GOOGL-META_markov_mr.png" alt="zscore_GOOGL-META_markov_mr">
+        
+        <h3>Zscore Googl-Meta Markov Mom</h3>
+        <img src="zscore_GOOGL-META_markov_mom.png" alt="zscore_GOOGL-META_markov_mom">
+        
+        <h3>Zscore Jpm-Gs Ou Baseline</h3>
+        <img src="zscore_JPM-GS_ou_baseline.png" alt="zscore_JPM-GS_ou_baseline">
+        
+        <h3>Zscore Jpm-Gs Markov Mr</h3>
+        <img src="zscore_JPM-GS_markov_mr.png" alt="zscore_JPM-GS_markov_mr">
+        
+        <h3>Zscore Jpm-Gs Markov Mom</h3>
+        <img src="zscore_JPM-GS_markov_mom.png" alt="zscore_JPM-GS_markov_mom">
+        
+    </body>
+    </html>
+    

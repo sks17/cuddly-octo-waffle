@@ -228,6 +228,10 @@
 			
 			overlay.hidden = false;
 			toggleBtn.setAttribute('aria-expanded', 'true');
+			
+			// Prevent body scroll when popup is open
+			document.body.style.overflow = 'hidden';
+			
 			overlay.offsetHeight;
 			overlay.classList.add('open');
 		}
@@ -235,6 +239,10 @@
 		function closePanel() {
 			overlay.classList.remove('open');
 			toggleBtn.setAttribute('aria-expanded', 'false');
+			
+			// Restore body scroll
+			document.body.style.overflow = '';
+			
 			setTimeout(() => {
 				if (!overlay.classList.contains('open')) {
 					overlay.hidden = true;
@@ -283,12 +291,67 @@
 			}
 		});
 
-		// Close customize panel when clicking outside
+		// Close customize panel when clicking outside (modern ergonomics)
+		document.addEventListener('click', (e) => {
+			if (!overlay.classList.contains('open')) return;
+			
+			const target = e.target as HTMLElement;
+			const clickedOnPanel = panel.contains(target);
+			const clickedOnToggle = toggleBtn.contains(target);
+			const clickedOnHero = target.closest('#hero-section') !== null;
+			
+			// Close if clicked outside panel, toggle button, or hero section
+			if (!clickedOnPanel && !clickedOnToggle && !clickedOnHero) {
+				closePanel();
+			}
+		});
+		
+		// Keyboard support - close with Escape key
+		document.addEventListener('keydown', (e) => {
+			if (e.key === 'Escape' && overlay.classList.contains('open')) {
+				closePanel();
+			}
+		});
+
+		// Auto-close popup if it leaves hero section during scroll
+		let scrollTimeout: number;
+		document.addEventListener('scroll', () => {
+			if (!overlay.classList.contains('open')) return;
+
+			// Debounce scroll checks for performance
+			clearTimeout(scrollTimeout);
+			scrollTimeout = setTimeout(() => {
+				const heroSection = document.getElementById('hero-section');
+				if (!heroSection) return;
+
+				const heroRect = heroSection.getBoundingClientRect();
+				const viewportHeight = window.innerHeight;
+				
+				// Calculate where popup would be positioned (top 50%, right 2rem)
+				const popupTop = viewportHeight / 2;
+				const popupHeight = 400; // Our fixed popup height
+				const popupBottom = popupTop + (popupHeight / 2);
+				
+				// Check if popup would be outside hero section bounds
+				const heroTop = heroRect.top;
+				const heroBottom = heroRect.bottom;
+				
+				// Close sooner - when hero section is 60% scrolled out of view
+				const heroVisibleThreshold = heroBottom - (heroRect.height * 0.4);
+				
+				// Close if popup would extend beyond hero section or hero is mostly scrolled away
+				if (popupTop < heroTop || popupBottom > heroVisibleThreshold) {
+					closePanel();
+				}
+			}, 50);
+		});
+		
+		// Also handle overlay click for backdrop
 		overlay.addEventListener('click', (e) => {
 			if (e.target === overlay) {
 				closePanel();
 			}
-		})
+		});
 
 		closeBtn.addEventListener('click', closePanel);
 
@@ -321,6 +384,16 @@
 
 			console.log('🎨 Generate button clicked');
 
+			// Show brief "wait up to thirty seconds" message
+			const originalText = generateBtn.textContent;
+			generateBtn.textContent = 'Wait up to thirty seconds for calculations...';
+			generateBtn.disabled = true;
+
+			// Close panel immediately after showing message
+			setTimeout(() => {
+				closePanel();
+			}, 1000);
+
 			// Collect current UI state
 			const activePattern = panel.querySelector('.segment.active') as HTMLElement;
 			const config = {
@@ -344,13 +417,6 @@
 			// Update state
 			updateState(config);
 
-			// Close panel immediately for decisive action
-			closePanel();
-
-			// Show loading state on button (even though panel is closed)
-			generateBtn.textContent = 'Generating...';
-			generateBtn.disabled = true;
-
 			try {
 				// Generate background
 				await generateBackground();
@@ -372,6 +438,9 @@
 			
 			// Sync UI with the reset state (which uses DEFAULT_CONFIG)
 			syncUIWithState();
+			
+			// Close panel immediately
+			closePanel();
 		});
 	}
 
@@ -441,9 +510,11 @@
 		left: 0;
 		font-size: 0.65rem;
 		color: var(--gray-400);
-		opacity: 0.6;
 		font-style: italic;
 		pointer-events: none;
+		background: var(--gray-999);
+		padding: 0.125rem 0.5rem;
+		border-radius: 3px;
 	}
 
 	/* Toggle Button */
@@ -510,12 +581,12 @@
 
 	/* Overlay */
 	.bg-generator-overlay {
-		position: fixed;
-		top: 0;
-		left: 0;
-		right: 0;
-		bottom: 0;
-		z-index: 10000;
+		position: fixed !important;
+		top: 0 !important;
+		left: 0 !important;
+		right: 0 !important;
+		bottom: 0 !important;
+		z-index: 2147483647 !important;
 		background: color-mix(in srgb, var(--gray-999) 40%, transparent);
 		display: flex;
 		align-items: flex-start;
@@ -525,40 +596,73 @@
 		transition: opacity 0.25s ease;
 		backdrop-filter: blur(4px);
 		pointer-events: none;
+		overflow: hidden !important;
 	}
 
 	:global(.theme-dark) .bg-generator-overlay {
 		background: color-mix(in srgb, var(--gray-0) 60%, transparent);
+		z-index: 2147483647 !important;
 	}
 
 	.bg-generator-overlay.open {
-		opacity: 1;
-		pointer-events: auto;
+		opacity: 1 !important;
+		pointer-events: auto !important;
+		z-index: 2147483647 !important;
 	}
 
 	/* Panel */
 	.bg-generator-panel {
-		position: absolute;
-		bottom: 3.5rem;
-		right: 0;
-		width: 320px;
+		position: fixed !important;
+		top: 50% !important;
+		right: 2rem !important;
+		transform: translateY(-50%) translateY(10px) scale(0.96) !important;
+		width: 300px;
+		max-width: calc(100vw - 4rem);
+		height: 400px;
+		max-height: calc(100vh - 8rem);
 		background: color-mix(in srgb, var(--gray-999) 98%, var(--gray-800));
 		border: 1px solid color-mix(in srgb, var(--gray-999) 85%, var(--gray-400) 15%);
 		border-radius: 10px;
-		padding: 1rem;
+		padding: 0;
 		backdrop-filter: blur(20px);
 		box-shadow: var(--shadow-lg);
-		transform: translateY(10px) scale(0.96);
 		opacity: 0;
 		transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1),
 		            opacity 0.25s ease;
-		max-height: 70vh;
-		overflow-y: auto;
+		overflow: hidden;
+		z-index: 2147483647 !important;
+		display: flex;
+		flex-direction: column;
 	}
 
 	.bg-generator-overlay.open .bg-generator-panel {
-		transform: translateY(0) scale(1);
-		opacity: 1;
+		transform: translateY(-50%) translateY(0) scale(1) !important;
+		opacity: 1 !important;
+		z-index: 2147483647 !important;
+	}
+
+	/* Panel sections */
+	.panel-header {
+		padding: 1rem;
+		flex-shrink: 0;
+	}
+
+	.panel-content {
+		padding: 0 1rem;
+		flex: 1;
+		overflow-y: auto;
+		max-height: 300px;
+	}
+
+	.panel-footer {
+		padding: 1rem;
+		flex-shrink: 0;
+		border-top: 1px solid color-mix(in srgb, var(--gray-999) 92%, var(--gray-400) 8%);
+	}
+
+	/* Ensure panel is always on top */
+	.bg-generator-panel {
+		z-index: 2147483647 !important;
 	}
 
 	/* Panel Header */
@@ -566,7 +670,7 @@
 		display: flex;
 		align-items: center;
 		justify-content: space-between;
-		margin-bottom: 1rem;
+		margin-bottom: 0;
 		padding-bottom: 0.75rem;
 		border-bottom: 1px solid color-mix(in srgb, var(--gray-999) 92%, var(--gray-400) 8%);
 	}
@@ -764,7 +868,7 @@
 	}
 
 	.toggle-input:checked + .toggle-switch {
-		background: var(--accent-regular);
+		background: var(--accent-wave-gradient, var(--accent-regular));
 	}
 
 	.toggle-input:checked + .toggle-switch::after {
@@ -792,7 +896,7 @@
 		appearance: none;
 		width: 0.875rem;
 		height: 0.875rem;
-		background: var(--accent-regular);
+		background: var(--accent-wave-gradient, var(--accent-regular));
 		border-radius: 50%;
 		cursor: pointer;
 		box-shadow: var(--shadow-sm);
@@ -807,7 +911,7 @@
 	.control-slider::-moz-range-thumb {
 		width: 0.875rem;
 		height: 0.875rem;
-		background: var(--accent-regular);
+		background: var(--accent-wave-gradient, var(--accent-regular));
 		border: none;
 		border-radius: 50%;
 		cursor: pointer;
@@ -856,7 +960,7 @@
 	}
 
 	.action-button.primary {
-		background: var(--accent-regular);
+		background: var(--accent-wave-gradient, var(--accent-regular));
 		color: var(--accent-text-over);
 		box-shadow: var(--shadow-sm);
 	}
@@ -874,16 +978,62 @@
 	/* Responsive */
 	@media (max-width: 50em) {
 		.bg-generator-wrapper {
-			top: 1rem;
+			top: auto;
+			bottom: 1rem;
 			right: 1rem;
 		}
 
+		.bg-generator-toggle {
+			padding: 0.625rem 2rem 0.625rem 0.875rem;
+			font-size: 0.65rem;
+		}
+
+		.info-trigger {
+			width: 1.5rem;
+		}
+
 		.bg-generator-overlay {
-			padding: 5rem 1rem 1rem 1rem;
+			padding: 1rem;
+			align-items: center;
+			justify-content: center;
 		}
 
 		.bg-generator-panel {
-			max-width: 100%;
+			position: fixed !important;
+			top: 50% !important;
+			left: 50% !important;
+			right: auto !important;
+			transform: translate(-50%, -50%) translateY(10px) scale(0.96) !important;
+			max-width: calc(100vw - 2rem);
+			max-height: calc(100vh - 2rem);
+			width: 100%;
+		}
+
+		.bg-generator-overlay.open .bg-generator-panel {
+			transform: translate(-50%, -50%) translateY(0) scale(1) !important;
+		}
+
+		.panel-header {
+			padding: 0.875rem;
+		}
+
+		.panel-title {
+			font-size: 0.875rem;
+		}
+
+		.panel-close {
+			width: 1.25rem;
+			height: 1.25rem;
+			font-size: 1.25rem;
+		}
+
+		.panel-content {
+			padding: 0 0.875rem;
+			max-height: calc(100vh - 12rem);
+		}
+
+		.panel-footer {
+			padding: 0.875rem;
 		}
 
 		.segmented-control {
@@ -892,6 +1042,16 @@
 
 		.segment {
 			min-width: calc(50% - 0.125rem);
+			font-size: 0.65rem;
+		}
+
+		.control-label {
+			font-size: 0.65rem;
+		}
+
+		.action-button {
+			padding: 0.625rem 0.875rem;
+			font-size: 0.65rem;
 		}
 	}
 

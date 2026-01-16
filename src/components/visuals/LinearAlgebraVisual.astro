@@ -1,209 +1,335 @@
 ---
 /**
- * Linear Algebra Visual Component
+ * Linear Algebra Background Visual Component
  * 
- * Custom visual showcasing mathematical matrix operations and transformations.
- * Connects to the existing background generation system.
+ * Showcases the brute-force matrix determinant visualization system.
+ * This card describes how the entire website background is generated.
+ * Clicking it scrolls to top and prompts user to click "Customize" button.
  */
 ---
 
-<div class="linear-algebra-visual" id="linear-algebra-visual">
-  <canvas id="matrix-canvas" width="300" height="180"></canvas>
-  <div class="matrix-info">
-    <span class="matrix-label">Matrix Determinant</span>
-    <span class="determinant-value" id="det-value">calculating...</span>
+<div class="linear-algebra-background-visual">
+  <div class="lav-container">
+    <!-- Left: Animated Matrix Preview -->
+    <div class="lav-preview-col">
+      <div class="matrix-preview">
+        <canvas id="matrix-canvas-card" width="320" height="320"></canvas>
+      </div>
+    </div>
+
+    <!-- Center: Description -->
+    <div class="lav-text-col">
+      <div class="lav-description">
+        <h2 class="lav-title">Background Generation System</h2>
+        <p>The entire background of this website is generated using brute-force linear algebra visualization. The system searches for matrices with maximized determinants and renders them as abstract geometric patterns using transformations, gradients, and color theory.</p>
+        <p class="lav-cta">👆 Click anywhere on this card to scroll to the top and customize the background yourself!</p>
+      </div>
+    </div>
+
+    <!-- Right: Features -->
+    <div class="lav-features-col">
+      <div class="lav-features">
+        <h3 class="features-title">Features</h3>
+        <div class="features-grid">
+          <div class="feature-item">Matrix Determinants</div>
+          <div class="feature-item">Linear Transforms</div>
+          <div class="feature-item">Color Theory</div>
+          <div class="feature-item">Geometric Patterns</div>
+          <div class="feature-item">Live Customization</div>
+          <div class="feature-item">9 Color Themes</div>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
 
 <script>
-  interface MatrixCell {
-    value: number;
-    x: number;
-    y: number;
-    targetColor: string;
-    currentColor: string;
-    animProgress: number;
-  }
+  // Card click handler - scroll to top and prompt customize
+  document.addEventListener('DOMContentLoaded', () => {
+    const visualCard = document.querySelector('.linear-algebra-background-visual');
+    if (visualCard) {
+      const parentLink = visualCard.closest('a');
+      if (parentLink) {
+        parentLink.addEventListener('click', (e) => {
+          e.preventDefault();
+          
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+          
+          setTimeout(() => {
+            const customizeButton = document.querySelector('.bg-generator-toggle');
+            if (customizeButton) {
+              if (!document.getElementById('pulse-animation-style')) {
+                const styleSheet = document.createElement('style');
+                styleSheet.id = 'pulse-animation-style';
+                styleSheet.textContent = '@keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(147, 188, 207, 0.7); } 50% { box-shadow: 0 0 0 15px rgba(147, 188, 207, 0); } 100% { box-shadow: 0 0 0 0 rgba(147, 188, 207, 0); } }';
+                document.head.appendChild(styleSheet);
+              }
+              
+              customizeButton.style.animation = 'pulse 1.5s ease-in-out 3';
+              
+              setTimeout(() => {
+                customizeButton.style.animation = '';
+              }, 4500);
+            }
+          }, 800);
+        });
+      }
+    }
 
-  function initLinearAlgebraVisual() {
-    const canvas = document.getElementById('matrix-canvas') as HTMLCanvasElement;
-    const detValue = document.getElementById('det-value');
-    if (!canvas || !detValue) return;
+    // Matrix animation
+    const canvas = document.getElementById('matrix-canvas-card');
+    if (!canvas) return;
 
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    // Check for reduced motion preference
-    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-    const cellSize = 35;
-    const matrixSize = 3;
+    const cellSize = 40;
+    const matrixSize = 6;
     const startX = (canvas.width - (matrixSize * cellSize)) / 2;
     const startY = (canvas.height - (matrixSize * cellSize)) / 2;
 
-    let matrix: number[][] = [];
-    let cells: MatrixCell[] = [];
-    let animationId: number | null = null;
+    let frame = 0;
 
-    function generateMatrix() {
-      matrix = [];
-      cells = [];
+    function drawMatrix() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
       
       for (let i = 0; i < matrixSize; i++) {
-        matrix[i] = [];
         for (let j = 0; j < matrixSize; j++) {
-          const value = Math.floor(Math.random() * 3); // 0, 1, or 2
-          matrix[i][j] = value;
+          const offset = (i + j + frame * 0.05) * 0.3;
+          const hue = (offset * 60) % 360;
+          const lightness = 40 + Math.sin(offset) * 20;
           
-          // Calculate color based on value
-          const hue = value * 120; // 0=red, 1=green, 2=blue
-          const targetColor = `hsl(${hue}, 70%, 60%)`;
+          ctx.fillStyle = 'hsl(' + hue + ', 70%, ' + lightness + '%)';
+          ctx.fillRect(
+            startX + j * cellSize + 2,
+            startY + i * cellSize + 2,
+            cellSize - 4,
+            cellSize - 4
+          );
           
-          cells.push({
-            value,
-            x: startX + j * cellSize,
-            y: startY + i * cellSize,
-            targetColor,
-            currentColor: 'hsl(0, 0%, 20%)',
-            animProgress: 0
-          });
+          const value = Math.floor((Math.sin(offset) + 1) * 1.5);
+          ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+          ctx.font = 'bold 16px monospace';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(
+            value.toString(),
+            startX + j * cellSize + cellSize / 2,
+            startY + i * cellSize + cellSize / 2
+          );
         }
       }
-
-      // Calculate determinant for 3x3 matrix
-      const det = matrix[0][0] * (matrix[1][1] * matrix[2][2] - matrix[1][2] * matrix[2][1]) -
-                  matrix[0][1] * (matrix[1][0] * matrix[2][2] - matrix[1][2] * matrix[2][0]) +
-                  matrix[0][2] * (matrix[1][0] * matrix[2][1] - matrix[1][1] * matrix[2][0]);
       
-      detValue.textContent = det.toString();
+      frame++;
+      requestAnimationFrame(drawMatrix);
     }
 
-    function interpolateColor(color1: string, color2: string, factor: number): string {
-      // Simple color interpolation
-      return factor < 1 ? color1 : color2;
-    }
-
-    function animate() {
-      if (prefersReducedMotion) {
-        // Static display for reduced motion
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        cells.forEach(cell => {
-          ctx.fillStyle = cell.targetColor;
-          ctx.fillRect(cell.x, cell.y, cellSize - 2, cellSize - 2);
-          
-          ctx.fillStyle = 'white';
-          ctx.font = '14px monospace';
-          ctx.textAlign = 'center';
-          ctx.fillText(
-            cell.value.toString(), 
-            cell.x + cellSize / 2, 
-            cell.y + cellSize / 2 + 4
-          );
-        });
-        return;
-      }
-
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-      // Update and draw cells
-      cells.forEach(cell => {
-        cell.animProgress = Math.min(cell.animProgress + 0.03, 1);
-        cell.currentColor = interpolateColor(cell.currentColor, cell.targetColor, cell.animProgress);
-        
-        // Draw cell
-        ctx.fillStyle = cell.currentColor;
-        ctx.fillRect(cell.x, cell.y, cellSize - 2, cellSize - 2);
-        
-        // Draw value
-        ctx.fillStyle = 'white';
-        ctx.font = '14px monospace';
-        ctx.textAlign = 'center';
-        ctx.fillText(
-          cell.value.toString(), 
-          cell.x + cellSize / 2, 
-          cell.y + cellSize / 2 + 4
-        );
-      });
-
-      // Continue animation if not complete
-      if (cells.some(cell => cell.animProgress < 1)) {
-        animationId = requestAnimationFrame(animate);
-      } else {
-        // Start new generation after delay
-        setTimeout(() => {
-          generateMatrix();
-          animationId = requestAnimationFrame(animate);
-        }, 2000);
-      }
-    }
-
-    // Initialize
-    generateMatrix();
-    animate();
-
-    // Cleanup function for when component unmounts
-    return () => {
-      if (animationId) {
-        cancelAnimationFrame(animationId);
-      }
-    };
-  }
-
-  // Initialize when component is in view
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initLinearAlgebraVisual);
-  } else {
-    initLinearAlgebraVisual();
-  }
+    drawMatrix();
+  });
 </script>
 
 <style>
-  .linear-algebra-visual {
+  .linear-algebra-background-visual {
     width: 100%;
-    height: 200px;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+    position: relative;
+    overflow: hidden;
+    cursor: pointer;
+  }
+
+  .lav-container {
+    display: grid;
+    grid-template-columns: 320px 1fr 220px;
+    gap: 2.5rem;
+    align-items: center;
+    max-width: 85%;
+    width: 100%;
+    padding: 0.5rem 2rem;
+  }
+
+  .lav-preview-col {
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    background: linear-gradient(135deg, rgba(76, 0, 130, 0.1), rgba(25, 25, 112, 0.05));
+  }
+
+  .matrix-preview {
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 12px;
+    padding: 1rem;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  }
+
+  #matrix-canvas-card {
+    display: block;
     border-radius: 8px;
-    position: relative;
-    overflow: hidden;
+  }
+
+  .lav-text-col {
+    display: flex;
+    flex-direction: column;
     gap: 1rem;
   }
 
-  #matrix-canvas {
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    border-radius: 4px;
-    background: rgba(0, 0, 0, 0.3);
+  .lav-title {
+    font-size: 2.2rem;
+    font-weight: 700;
+    color: white;
+    margin: 0 0 0.75rem 0;
+    line-height: 1.2;
+    letter-spacing: -0.02em;
   }
 
-  .matrix-info {
+  .lav-description {
+    color: rgba(255, 255, 255, 0.95);
+  }
+
+  .lav-description p {
+    font-size: 1.05rem;
+    line-height: 1.65;
+    margin: 0 0 1rem 0;
+  }
+
+  .lav-cta {
+    font-size: 1rem !important;
+    font-weight: 600 !important;
+    color: #93bcce !important;
+    background: rgba(147, 188, 207, 0.1);
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    border: 2px solid rgba(147, 188, 207, 0.3);
+  }
+
+  .lav-features-col {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .lav-features {
+    width: 100%;
+  }
+
+  .features-title {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.9);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 0.75rem;
+    border-bottom: 2px solid rgba(255, 255, 255, 0.3);
+    padding-bottom: 0.4rem;
+  }
+
+  .features-grid {
     display: flex;
     flex-direction: column;
-    align-items: center;
-    gap: 0.25rem;
+    gap: 0.5rem;
   }
 
-  .matrix-label {
-    font-size: 0.8rem;
-    color: rgba(255, 255, 255, 0.7);
-    font-family: 'Courier New', monospace;
-  }
-
-  .determinant-value {
-    font-size: 1.2rem;
-    font-weight: bold;
-    color: var(--accent-light);
-    font-family: 'Courier New', monospace;
-    min-width: 3ch;
+  .feature-item {
+    background: rgba(147, 188, 207, 0.15);
+    border: 1px solid rgba(147, 188, 207, 0.3);
+    border-radius: 6px;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.68rem;
+    font-weight: 500;
+    color: white;
     text-align: center;
+    transition: all 0.2s ease;
   }
 
-  /* Reduced motion support */
-  @media (prefers-reduced-motion: reduce) {
-    #matrix-canvas {
-      animation: none;
+  .feature-item:hover {
+    background: rgba(147, 188, 207, 0.25);
+    border-color: rgba(147, 188, 207, 0.5);
+    transform: translateX(3px);
+  }
+
+  @media (max-width: 1400px) {
+    .lav-container {
+      grid-template-columns: 280px 1fr 200px;
+      max-width: 90%;
+    }
+
+    .lav-title {
+      font-size: 2rem;
+    }
+
+    .lav-description p {
+      font-size: 1rem;
+    }
+  }
+
+  @media (max-width: 1200px) {
+    .lav-container {
+      grid-template-columns: 240px 1fr 180px;
+      gap: 2rem;
+    }
+
+    .lav-title {
+      font-size: 1.8rem;
+    }
+
+    .lav-description p {
+      font-size: 0.95rem;
+    }
+  }
+
+  @media (max-width: 1000px) {
+    .lav-container {
+      grid-template-columns: 1fr;
+      gap: 1.5rem;
+      max-width: 95%;
+      padding: 2rem 1.5rem;
+    }
+
+    .lav-preview-col {
+      order: 1;
+    }
+
+    .lav-text-col {
+      order: 2;
+      text-align: center;
+    }
+
+    .lav-features-col {
+      order: 3;
+      max-width: 300px;
+      margin: 0 auto;
+    }
+
+    .lav-title {
+      font-size: 2rem;
+    }
+
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 0.5rem;
+    }
+  }
+
+  @media (max-width: 600px) {
+    .lav-container {
+      padding: 1.5rem 1rem;
+    }
+
+    .lav-title {
+      font-size: 1.6rem;
+    }
+
+    .lav-description p {
+      font-size: 0.9rem;
+    }
+
+    #matrix-canvas-card {
+      width: 240px;
+      height: 240px;
     }
   }
 </style>

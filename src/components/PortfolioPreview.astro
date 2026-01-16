@@ -6,10 +6,13 @@ interface Props {
 }
 
 const { data, id } = Astro.props.project;
+
+// Get the first tag as the project label (e.g., 'SinghDevs', 'SinghLearns')
+const projectLabel = data.tags && data.tags.length > 0 ? data.tags[0] : 'SinghDevs';
 ---
 
 <a class="card" href={`/work/${id}`}>
-	<span class="tag">&gt; SinghDevs</span>
+	<span class="tag">&gt; {projectLabel}</span>
 	<span class="title">{data.title}</span>
 	<img src={data.img} alt={data.img_alt || ''} loading="lazy" decoding="async" />
 </a>
@@ -62,7 +65,7 @@ const { data, id } = Astro.props.project;
 		background: var(--gray-999);
 		color: var(--gray-200);
 		border-radius: 0.375rem;
-		margin-top: 2.5rem;
+		margin-top: 3.25rem;
 	}
 
 	img {

@@ -35,30 +35,49 @@ import Icon from './Icon.astro';
 						<span class="email-address">sakshamsinghbhs@gmail.com</span>
 					</div>
 				</a>
+				<button class="suggestion-trigger email-btn email-btn--suggestions" id="suggestion-trigger">
+					<Icon icon="pencil-line" size="1.2em" />
+					<div class="email-info">
+						<span class="email-label">Suggest changes / additions to the website</span>
+						<span class="email-address">Your suggestion...</span>
+					</div>
+				</button>
 			</div>
 		</div>
+	</div>
+</section>
 
-		<div class="suggestions-section">
+<!-- Suggestions Popup Modal -->
+<div class="suggestions-modal" id="suggestions-modal">
+	<div class="suggestions-modal-overlay" id="suggestions-modal-overlay"></div>
+	<div class="suggestions-modal-content">
+		<div class="suggestions-modal-header">
 			<h3>Suggest changes / additions to the website</h3>
-			<div class="suggestions-container">
-				<form class="suggestion-form" id="suggestion-form">
-				<textarea 
-					id="suggestion-input" 
-					class="suggestion-input" 
-					placeholder="Your suggestion..."
-					maxlength="300"
-					rows="1"
-					required
-				></textarea>
-					<button type="submit" class="suggestion-submit">
-						<Icon icon="paper-plane-tilt" size="1em" />
-					</button>
-				</form>
+			<button class="suggestions-modal-close" id="suggestions-modal-close">
+				<Icon icon="x" size="1.2em" />
+			</button>
+		</div>
+		<div class="suggestions-container">
+			<form class="suggestion-form" id="suggestion-form">
+			<textarea 
+				id="suggestion-input" 
+				class="suggestion-input" 
+				placeholder="Your suggestion..."
+				maxlength="300"
+				rows="1"
+				required
+			></textarea>
+				<button type="submit" class="suggestion-submit">
+					<Icon icon="paper-plane-tilt" size="1em" />
+				</button>
+			</form>
+			<div class="suggestions-output">
 				<ul class="suggestions-list" id="suggestions-list">
 					<!-- Recent suggestions will appear here -->
 				</ul>
 			</div>
 		</div>
+	</div>
 	</div>
 </section>
 
@@ -67,8 +86,36 @@ import Icon from './Icon.astro';
 		const form = document.getElementById('suggestion-form');
 		const input = document.getElementById('suggestion-input');
 		const list = document.getElementById('suggestions-list');
+		const trigger = document.getElementById('suggestion-trigger');
+		const modal = document.getElementById('suggestions-modal');
+		const overlay = document.getElementById('suggestions-modal-overlay');
+		const closeBtn = document.getElementById('suggestions-modal-close');
 
-		if (!form || !input || !list) return;
+		if (!form || !input || !list || !trigger || !modal || !overlay || !closeBtn) return;
+
+		// Modal functionality
+		function openModal() {
+			modal.classList.add('suggestions-modal--open');
+			document.body.style.overflow = 'hidden';
+			// Focus the input after a short delay to allow animation
+			setTimeout(() => input.focus(), 100);
+		}
+
+		function closeModal() {
+			modal.classList.remove('suggestions-modal--open');
+			document.body.style.overflow = '';
+		}
+
+		trigger.addEventListener('click', openModal);
+		closeBtn.addEventListener('click', closeModal);
+		overlay.addEventListener('click', closeModal);
+
+		// Close modal on escape key
+		document.addEventListener('keydown', (e) => {
+			if (e.key === 'Escape' && modal.classList.contains('suggestions-modal--open')) {
+				closeModal();
+			}
+		});
 
 		// Auto-resize textarea functionality
 		function autoResize() {
@@ -258,34 +305,123 @@ import Icon from './Icon.astro';
 		word-break: break-all;
 	}
 
-	/* Suggestions Section */
-	.suggestions-section {
-		background: var(--gray-900_60);
-		border: 1px solid var(--gray-700);
-		border-radius: 1rem;
-		padding: 2.5rem;
-		box-shadow: var(--shadow-md);
-		backdrop-filter: blur(10px);
+	/* Suggestion Trigger Button */
+	.suggestion-trigger {
+		cursor: pointer;
+		background: var(--gray-900);
+		border: 1px solid var(--gray-800);
 	}
 
-	.suggestions-section h3 {
+	.suggestion-trigger:hover,
+	.suggestion-trigger:focus {
+		background: var(--gray-800);
+		border-color: var(--accent-regular);
+		color: var(--gray-0);
+		transform: translateY(-2px);
+		box-shadow: var(--shadow-md);
+	}
+
+	/* Suggestions Modal */
+	.suggestions-modal {
+		position: fixed;
+		top: 0;
+		left: 0;
+		width: 100%;
+		height: 100%;
+		z-index: 1000;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		opacity: 0;
+		visibility: hidden;
+		transition: opacity 0.3s ease, visibility 0.3s ease;
+	}
+
+	.suggestions-modal--open {
+		opacity: 1;
+		visibility: visible;
+	}
+
+	.suggestions-modal-overlay {
+		position: absolute;
+		top: 0;
+		left: 0;
+		width: 100%;
+		height: 100%;
+		background: rgba(0, 0, 0, 0.8);
+		backdrop-filter: blur(8px);
+	}
+
+	.suggestions-modal-content {
+		position: relative;
+		background: var(--gray-900);
+		border: 1px solid var(--gray-700);
+		border-radius: 1rem;
+		padding: 2rem;
+		max-width: 90vw;
+		max-height: 90vh;
+		width: 100%;
+		max-width: 600px;
+		box-shadow: var(--shadow-lg);
+		transform: translateY(20px);
+		transition: transform 0.3s ease;
+		overflow: hidden;
+		display: flex;
+		flex-direction: column;
+	}
+
+	.suggestions-modal--open .suggestions-modal-content {
+		transform: translateY(0);
+	}
+
+	.suggestions-modal-header {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		margin-bottom: 2rem;
+		padding-bottom: 1rem;
+		border-bottom: 1px solid var(--gray-700);
+	}
+
+	.suggestions-modal-header h3 {
 		font-size: var(--text-xl);
 		color: var(--gray-100);
-		margin: 0 0 2rem;
-		text-align: center;
+		margin: 0;
 		font-weight: 600;
 		letter-spacing: -0.015em;
+	}
+
+	.suggestions-modal-close {
+		padding: 0.5rem;
+		background: transparent;
+		border: 1px solid var(--gray-700);
+		border-radius: 0.25rem;
+		color: var(--gray-400);
+		cursor: pointer;
+		transition: all 0.2s ease;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+	}
+
+	.suggestions-modal-close:hover {
+		background: var(--gray-800);
+		border-color: var(--accent-regular);
+		color: var(--gray-0);
 	}
 
 	.suggestions-container {
 		display: flex;
 		flex-direction: column;
 		gap: 1.5rem;
-		max-width: none;
+		flex: 1;
+		min-height: 0;
 	}
 
-	.suggestions-input-area {
-		flex: 0 0 auto;
+	.suggestions-output {
+		flex: 1;
+		min-height: 0;
+		overflow: hidden;
 	}
 
 	.suggestion-form {
@@ -363,8 +499,28 @@ import Icon from './Icon.astro';
 		display: flex;
 		flex-direction: column;
 		gap: 0.75rem;
-		max-height: 300px;
+		max-height: 250px;
 		overflow-y: auto;
+		padding-right: 0.5rem;
+	}
+
+	/* Custom scrollbar for suggestions list */
+	.suggestions-list::-webkit-scrollbar {
+		width: 4px;
+	}
+
+	.suggestions-list::-webkit-scrollbar-track {
+		background: var(--gray-800);
+		border-radius: 2px;
+	}
+
+	.suggestions-list::-webkit-scrollbar-thumb {
+		background: var(--gray-600);
+		border-radius: 2px;
+	}
+
+	.suggestions-list::-webkit-scrollbar-thumb:hover {
+		background: var(--gray-500);
 	}
 
 	.suggestions-list li {
@@ -394,75 +550,43 @@ import Icon from './Icon.astro';
 		}
 
 		.contact-content {
-			flex-direction: row;
-			gap: 4rem;
-			align-items: flex-start;
-		}
-
-		.email-actions {
-			flex: 1;
+			gap: 3rem;
+			align-items: center;
 		}
 
 		.email-actions h2 {
-			text-align: left;
+			text-align: center;
 			font-size: var(--text-3xl);
-			margin-bottom: 1.5rem;
+			margin-bottom: 2rem;
 		}
 
-		.suggestions-section {
-			flex: 1;
-			max-width: 35rem;
-		}
-
-		.suggestions-container {
-			flex-direction: row;
-			gap: 2rem;
-			align-items: flex-start;
-		}
-
-		.suggestions-input-area {
-			flex: 0 0 20rem;
-		}
-
-		.suggestions-output {
-			flex: 1;
-			min-width: 0;
+		.suggestions-modal-content {
+			max-width: 700px;
+			padding: 2.5rem;
 		}
 	}
 
 	@media (min-width: 75em) {
-		.contact-content {
-			flex-direction: column;
-			gap: 4rem;
-		}
-
-		.email-actions {
-			flex: none;
-			margin-bottom: 2rem;
-		}
-
 		.email-buttons {
-			grid-template-columns: repeat(3, 1fr);
+			grid-template-columns: repeat(4, 1fr);
 			gap: 2rem;
 		}
 
 		.email-btn {
 			flex-direction: column;
 			text-align: center;
-			padding: 2.5rem 2rem;
-			gap: 1.5rem;
-			min-height: 12rem;
+			padding: 2rem 1.5rem;
+			gap: 1rem;
+			min-height: 10rem;
 		}
 
 		.email-info {
 			align-items: center;
-			gap: 0.75rem;
+			gap: 0.5rem;
 		}
 
-		.suggestions-section {
-			flex: none;
-			max-width: 50rem;
-			margin: 0 auto;
+		.suggestions-modal-content {
+			max-width: 800px;
 		}
 	}
 </style>

@@ -412,3 +412,68 @@ h5 {
 		transition: none;
 	}
 }
+
+/* ============================================================ */
+/* MOBILE OPTIMIZATIONS - Isolated, additive layer             */
+/* Applied only below 50em breakpoint (800px)                  */
+/* Desktop experience above 50em remains pixel-perfect         */
+/* ============================================================ */
+
+@media (max-width: 49.9em) {
+	/* Typography: Scale down large text for mobile readability */
+	:root {
+		--text-5xl: clamp(2.5rem, 10vw, 3.5rem);
+		--text-4xl: clamp(2rem, 8vw, 3rem);
+		--text-3xl: clamp(1.75rem, 6vw, 2.25rem);
+		--text-2xl: clamp(1.5rem, 5vw, 1.875rem);
+		--text-xl: clamp(1.25rem, 4vw, 1.5rem);
+	}
+
+	/* Spacing: Reduce excessive margins and padding */
+	.main-content {
+		margin-top: 3rem !important;
+	}
+
+	/* Stack utility: Reduce gap sizes proportionally */
+	.stack {
+		gap: 1.5rem;
+	}
+	.gap-20 {
+		gap: 2rem;
+	}
+	.gap-30 {
+		gap: 3rem;
+	}
+	.gap-48 {
+		gap: 4rem;
+	}
+
+	/* Touch targets: Ensure minimum 44px for accessibility */
+	button,
+	a.link,
+	.social {
+		min-height: 44px;
+		min-width: 44px;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+	}
+
+	/* Prevent horizontal overflow */
+	body {
+		overflow-x: hidden;
+	}
+
+	/* Ensure all containers respect viewport width */
+	* {
+		max-width: 100%;
+	}
+
+	/* Allow exceptions for fullwidth elements */
+	.project-section,
+	.projects-container,
+	[class*="bg-"],
+	nav {
+		max-width: none;
+	}
+}

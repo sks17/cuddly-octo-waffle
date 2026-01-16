@@ -1,0 +1,40 @@
+{
+  "input_file": "outputs\\raw_prices.parquet",
+  "output_file": "outputs\\price_panel.parquet",
+  "processing_date": "2026-01-12T15:01:52.996765",
+  "date_range": {
+    "start": "2024-01-16 00:00:00",
+    "end": "2026-01-09 00:00:00",
+    "n_dates": 499
+  },
+  "symbols": {
+    "total_input": 16,
+    "kept": 16,
+    "dropped": 0,
+    "kept_list": [
+      "AAPL",
+      "BAC",
+      "C",
+      "CVX",
+      "GOOGL",
+      "GS",
+      "JNJ",
+      "JPM",
+      "KO",
+      "META",
+      "MS",
+      "MSFT",
+      "NVDA",
+      "PEP",
+      "PFE",
+      "XOM"
+    ],
+    "dropped_list": []
+  },
+  "coverage_threshold": 0.95,
+  "dropped_symbols_details": {},
+  "final_shape": {
+    "dates": 499,
+    "symbols": 16
+  }
+}

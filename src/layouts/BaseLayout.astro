@@ -41,16 +41,22 @@ const { title, description } = Astro.props;
 			if (document.readyState === 'loading') {
 				document.addEventListener('DOMContentLoaded', () => {
 					initializeAccentTheme();
-					// Start intro animation after a brief delay for theme setup
-					setTimeout(() => {
-						initAccentIntro();
-					}, 100);
+					// Only run RGB animation on home page
+					if (window.location.pathname === '/' || window.location.pathname === '/index.html') {
+						// Start intro animation after a brief delay for theme setup
+						setTimeout(() => {
+							initAccentIntro();
+						}, 100);
+					}
 				});
 			} else {
 				initializeAccentTheme();
-				setTimeout(() => {
-					initAccentIntro();
-				}, 100);
+				// Only run RGB animation on home page
+				if (window.location.pathname === '/' || window.location.pathname === '/index.html') {
+					setTimeout(() => {
+						initAccentIntro();
+					}, 100);
+				}
 			}
 		</script>
 		<script>
@@ -72,6 +78,7 @@ const { title, description } = Astro.props;
 				--bg-scale: 1.68;
 				--bg-aspect-ratio: calc(var(--bg-image-aspect-ratio) / var(--bg-scale));
 				--bg-gradient-size: calc(var(--bg-scale) * 100%);
+				--bg-overlay-opacity: 0.08;
 			}
 
 			:root.theme-dark {
@@ -79,6 +86,7 @@ const { title, description } = Astro.props;
 				--bg-image-main-curves: url('/assets/backgrounds/bg-main-dark.svg');
 				--bg-svg-blend-mode: darken;
 				--bg-blend-mode: lighten;
+				--bg-overlay-opacity: 0;
 			}
 
 			/* These backgrounds are displayed below the fold, so we lazy load them
@@ -118,6 +126,7 @@ const { title, description } = Astro.props;
 			.backgrounds {
 				min-height: 100%;
 				isolation: isolate;
+				position: relative;
 				--backgrounds-original:
 					/*noise*/
 					url('/assets/backgrounds/noise.png') top center/220px repeat,
@@ -126,7 +135,8 @@ const { title, description } = Astro.props;
 					/*header2*/ var(--bg-image-main) top center/var(--bg-gradient-size) no-repeat,
 					/*base*/ var(--gray-999);
 				background: var(--bg-override, var(--backgrounds-original));
-				background-blend-mode: /*noise*/
+				background-blend-mode:
+					/*noise*/
 					overlay,
 					/*footer*/ var(--bg-blend-mode),
 					/*header1*/ var(--bg-svg-blend-mode),
@@ -134,24 +144,62 @@ const { title, description } = Astro.props;
 					/*base*/ normal;
 			}
 
+		.backgrounds::before {
+			content: '';
+			position: absolute;
+			top: 0;
+			left: 0;
+			right: 0;
+			bottom: 0;
+			background: rgba(0, 0, 0, var(--bg-overlay-opacity));
+			pointer-events: none;
+		}
+
+		.main-content {
+			margin-top: 6rem;
+		}
+
+		@media (min-width: 50em) {
 			.main-content {
-				margin-top: 6rem;
+				margin-top: 8rem;
+			}
+		}
+
+		@media (forced-colors: active) {
+			/* Deactivate custom backgrounds for high contrast users. */
+			.backgrounds {
+				background: none;
+				background-blend-mode: none;
+				--bg-gradient-size: none;
+			}
+		}
+
+		/* ============================================================ */
+		/* MOBILE OPTIMIZATIONS - Base layout                          */
+		/* ============================================================ */
+		
+		@media (max-width: 49.9em) {
+			.backgrounds {
+				/* Simplify background layers on mobile for performance */
+				--backgrounds-original:
+					/*noise*/
+					url('/assets/backgrounds/noise.png') top center/220px repeat,
+					/*base*/ var(--gray-999);
+				background-blend-mode:
+					/*noise*/
+					overlay,
+					/*base*/ normal;
 			}
 
-			@media (min-width: 50em) {
-				.main-content {
-					margin-top: 8rem;
-				}
+			.backgrounds::before {
+				/* Slightly reduce overlay opacity on mobile */
+				background: rgba(0, 0, 0, calc(var(--bg-overlay-opacity) * 0.7));
 			}
 
-			@media (forced-colors: active) {
-				/* Deactivate custom backgrounds for high contrast users. */
-				.backgrounds {
-					background: none;
-					background-blend-mode: none;
-					--bg-gradient-size: none;
-				}
+			.main-content {
+				margin-top: 3rem;
 			}
-		</style>
+		}
+	</style>
 	</body>
 </html>

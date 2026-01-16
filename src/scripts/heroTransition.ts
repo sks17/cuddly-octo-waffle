@@ -28,9 +28,9 @@ export function initHeroTransition(): void {
   // Check for reduced motion preference
   const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   
-  // Add breathing pause before transition (respect reduced motion)
-  const breathingDelay = prefersReducedMotion ? 0 : 250; // Brief pause for visual stability
-  
+  // Shorter breathing pause since we're using transforms
+  const breathingDelay = prefersReducedMotion ? 0 : 300;
+
   // Listen for theme changes and update backgrounds
   const updateThemeStyles = () => {
     const isDark = document.documentElement.classList.contains('theme-dark');
@@ -56,86 +56,61 @@ export function initHeroTransition(): void {
   // Ensure hero section has proper stacking context
   heroSection.style.position = 'relative';
   heroSection.style.zIndex = '10';
-  
-  // Apply breathing transition after pause
+
+  // Apply smooth transition using transforms (no layout changes initially)
   setTimeout(() => {
-    // Remove auto centering from wrapper with smooth breathing transition
-    const transition = prefersReducedMotion ? 'none' : 'transform 0.8s cubic-bezier(0.25, 0.1, 0.25, 1), margin 0.8s cubic-bezier(0.25, 0.1, 0.25, 1)';
-    wrapper.style.transition = transition;
-    wrapper.style.transform = 'translateX(0)';
-    wrapper.style.willChange = prefersReducedMotion ? 'auto' : 'transform';
-    wrapper.style.marginInline = '0';
-    wrapper.style.position = 'relative';
-    wrapper.style.zIndex = '10';
+    const isDark = document.documentElement.classList.contains('theme-dark');
     
-    // Apply subtle breathing effect to text elements
+    // STEP 1: Apply box styling and setup transforms while keeping center layout
     [title, tagline, roles].forEach(element => {
-      if (element && !prefersReducedMotion) {
-        element.style.transition = 'opacity 0.8s cubic-bezier(0.25, 0.1, 0.25, 1), transform 0.8s cubic-bezier(0.25, 0.1, 0.25, 1)';
-        element.style.transform = 'translateX(0)';
+      if (element) {
+        // Set up smooth transitions for all properties including transform
+        const transition = prefersReducedMotion ? 'none' : 'all 2.5s cubic-bezier(0.23, 1, 0.32, 1)';
+        element.style.transition = transition;
+        element.style.willChange = 'transform, opacity, background-color, padding';
+        
+        // Apply box styling immediately
+        element.style.setProperty('background-color', isDark ? 'rgba(0, 0, 0, 1)' : 'rgba(255, 255, 255, 0.95)', 'important');
+        element.style.setProperty('backdrop-filter', 'blur(8px)', 'important');
+        element.style.setProperty('padding', '1.5rem 2rem', 'important');
+        element.style.setProperty('border-radius', '8px', 'important');
+        element.style.setProperty('width', 'fit-content', 'important');
+        element.style.setProperty('border', isDark ? '1px solid rgba(255, 255, 255, 0.2)' : '1px solid rgba(255, 255, 255, 0.1)', 'important');
+        element.style.setProperty('position', 'relative', 'important');
+        element.style.setProperty('z-index', '100', 'important');
       }
     });
+    
+    // STEP 2: After boxes appear, slide everything left using transform
+    setTimeout(() => {
+      // Use a much more conservative approach to ensure content stays visible
+      const containerWidth = heroDiv.offsetWidth;
+      const viewportWidth = window.innerWidth;
+      
+      // Move left by a small, safe amount - never more than 15% of container width
+      // and never more than 20% of viewport width, whichever is smaller
+      const maxMovePercent = Math.min(containerWidth * 0.15, viewportWidth * 0.2);
+      
+      // Ensure we never move more than 200px left (reasonable maximum)
+      const translateX = -Math.min(maxMovePercent, 200);
+      
+      // Apply both the transform movement AND the alignment change simultaneously
+      // so text transitions from center to left-aligned during the slide
+      heroDiv.style.transform = `translateX(${translateX}px)`;
+      heroDiv.style.transition = prefersReducedMotion ? 'none' : 'transform 2.5s cubic-bezier(0.23, 1, 0.32, 1)';
+      
+      // Change alignment class at the start of the slide so text alignment transitions during movement
+      heroDiv.classList.remove('center');
+      heroDiv.classList.add('start');
+      
+      // Don't remove the transform - keep boxes in their final left position
+      // The transform keeps the boxes where they slid to, preventing them from sliding back
+      
+    }, 200); // Small delay to let boxes appear first
+    
   }, breathingDelay);
   
   // Ensure hero div has stacking context
   heroDiv.style.position = 'relative';
   heroDiv.style.zIndex = '11';
-  
-  console.log('Hero transition - wrapper z-index:', wrapper.style.zIndex);
-  console.log('Hero transition - heroDiv z-index:', heroDiv.style.zIndex);
-  
-  // Change hero div from center to start alignment
-  heroDiv.classList.remove('center');
-  heroDiv.classList.add('start');
-
-  // Style title with semi-transparent background for better readability
-  if (title) {
-    console.log('Styling title element');
-    const isDark = document.documentElement.classList.contains('theme-dark');
-    const titleTransition = prefersReducedMotion ? 'none' : 'opacity 0.8s cubic-bezier(0.25, 0.1, 0.25, 1), transform 0.8s cubic-bezier(0.25, 0.1, 0.25, 1)';
-    title.style.setProperty('transition', titleTransition, 'important');
-    title.style.setProperty('will-change', 'transform, opacity', 'important');
-    title.style.setProperty('background-color', isDark ? 'rgba(0, 0, 0, 1)' : 'rgba(255, 255, 255, 0.95)', 'important');
-    title.style.setProperty('backdrop-filter', 'blur(8px)', 'important');
-    title.style.setProperty('padding', '1.5rem 2rem', 'important');
-    title.style.setProperty('border-radius', '8px', 'important');
-    title.style.setProperty('position', 'relative', 'important');
-    title.style.setProperty('z-index', '100', 'important');
-    title.style.setProperty('width', 'fit-content', 'important');
-    title.style.setProperty('border', isDark ? '1px solid rgba(255, 255, 255, 0.2)' : '1px solid rgba(255, 255, 255, 0.1)', 'important');
-  }
-
-  // Style tagline with semi-transparent background for better readability
-  if (tagline) {
-    console.log('Styling tagline element');
-    const isDark = document.documentElement.classList.contains('theme-dark');
-    const taglineTransition = prefersReducedMotion ? 'none' : 'opacity 0.8s cubic-bezier(0.25, 0.1, 0.25, 1), transform 0.8s cubic-bezier(0.25, 0.1, 0.25, 1)';
-    tagline.style.setProperty('transition', taglineTransition, 'important');
-    tagline.style.setProperty('will-change', 'transform, opacity', 'important');
-    tagline.style.setProperty('background-color', isDark ? 'rgba(0, 0, 0, 1)' : 'rgba(255, 255, 255, 0.95)', 'important');
-    tagline.style.setProperty('backdrop-filter', 'blur(8px)', 'important');
-    tagline.style.setProperty('padding', '1.5rem 2rem', 'important');
-    tagline.style.setProperty('border-radius', '8px', 'important');
-    tagline.style.setProperty('position', 'relative', 'important');
-    tagline.style.setProperty('z-index', '100', 'important');
-    tagline.style.setProperty('width', 'fit-content', 'important');
-    tagline.style.setProperty('border', isDark ? '1px solid rgba(255, 255, 255, 0.2)' : '1px solid rgba(255, 255, 255, 0.1)', 'important');
-  }
-
-  // Style roles with semi-transparent background for better readability
-  if (roles) {
-    console.log('Styling roles element');
-    const isDark = document.documentElement.classList.contains('theme-dark');
-    const rolesTransition = prefersReducedMotion ? 'none' : 'opacity 0.8s cubic-bezier(0.25, 0.1, 0.25, 1), transform 0.8s cubic-bezier(0.25, 0.1, 0.25, 1)';
-    roles.style.setProperty('transition', rolesTransition, 'important');
-    roles.style.setProperty('will-change', 'transform, opacity', 'important');
-    roles.style.setProperty('background-color', isDark ? 'rgba(0, 0, 0, 1)' : 'rgba(255, 255, 255, 0.95)', 'important');
-    roles.style.setProperty('backdrop-filter', 'blur(8px)', 'important');
-    roles.style.setProperty('padding', '1.5rem 2rem', 'important');
-    roles.style.setProperty('border-radius', '8px', 'important');
-    roles.style.setProperty('position', 'relative', 'important');
-    roles.style.setProperty('z-index', '100', 'important');
-    roles.style.setProperty('width', 'fit-content', 'important');
-    roles.style.setProperty('border', isDark ? '1px solid rgba(255, 255, 255, 0.2)' : '1px solid rgba(255, 255, 255, 0.1)', 'important');
-  }
 }

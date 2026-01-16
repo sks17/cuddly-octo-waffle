@@ -4,7 +4,7 @@ import HomepageContact from '../components/HomepageContact.astro';
 import { getRegistryBlogs, getFeaturedBlogs } from '../data/blogRegistry.ts';
 
 const title = 'Blogs & Misc';
-const description = 'Articles, thoughts, and miscellaneous content.';
+const description = 'My current article focus is AI safety';
 const allBlogs = getRegistryBlogs();
 const featuredBlogs = getFeaturedBlogs();
 ---
@@ -14,7 +14,7 @@ const featuredBlogs = getFeaturedBlogs();
 		<div class="wrapper stack gap-8 lg:gap-12">
 			<header class="page-header">
 				<h1>Blogs & Misc</h1>
-				<p>Thoughts on technology, design, and the spaces between.</p>
+				<p>I am currently focused on writing about my experience exploring AI safety and alignment.</p>
 			</header>
 		</div>
 
@@ -81,6 +81,29 @@ const featuredBlogs = getFeaturedBlogs();
 		<HomepageContact />
 	</div>
 </BaseLayout>
+
+<script>
+	// Prevent navigation for "Coming soon" blogs
+	document.addEventListener('DOMContentLoaded', () => {
+		const blogLinks = document.querySelectorAll('.blog-link');
+		blogLinks.forEach(link => {
+			const description = link.querySelector('.blog-description');
+			if (description && description.textContent?.trim() === 'Coming soon!') {
+				link.addEventListener('click', (e) => {
+					e.preventDefault();
+					// Optional: Add some visual feedback
+					link.style.cursor = 'default';
+				});
+				link.style.cursor = 'default';
+				// Make the card slightly dimmed to indicate it's not clickable
+				const blogEntry = link.closest('.blog-entry');
+				if (blogEntry) {
+					blogEntry.style.opacity = '0.7';
+				}
+			}
+		});
+	});
+</script>
 
 <style>
 	.page-header h1 {

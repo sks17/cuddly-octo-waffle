@@ -18,6 +18,10 @@ export interface ProjectMetadata {
 export interface ProjectCard extends ProjectMetadata {
   visualComponent?: string; // Optional custom visual component name
   colorTheme: 'cyan' | 'purple' | 'orange' | 'white';
+  cardHeight?: string;      // Optional card height (e.g., '50vh', '60vh', '70vh')
+  cardMinHeight?: string;   // Optional minimum height (e.g., '400px', '450px', '500px')
+  projectTag?: string;      // Optional project tag label (e.g., 'SinghDevs', 'SinghLearns')
+  excludeFromWorkPage?: boolean; // Optional flag to hide from work page
 }
 
 /**
@@ -32,38 +36,54 @@ export const projectRegistry: ProjectCard[] = [
   {
     id: 'paper-pigeon',
     title: 'Paper Pigeon',
-    description: 'A modern messaging platform with real-time chat, file sharing, and collaborative workspaces. Built with TypeScript, React, and WebSocket technology.',
-    tags: ['Dev', 'Frontend', 'Real-time'],
-    publishDate: new Date('2023-11-01'),
-    colorTheme: 'cyan',
+    description: '3D force-directed graph mapping the University of Washington Allen School\'s research ecosystem. Features RAG pipelines for paper Q&A, resume matching against researcher profiles, and VR rendering paths to make connections between labs, researchers, and papers visible and intuitive.',
+    tags: ['React 19', 'TypeScript', 'Three.js', 'AWS Bedrock', 'DynamoDB', 'Flask', 'Vite', 'A-Frame VR'],
+    publishDate: new Date('2025-11-15'),
+    colorTheme: 'white',
     visualComponent: 'PaperPigeonVisual' // Custom component
   },
   {
-    id: 'bloom-box',
-    title: 'Bloom Box',
-    description: 'We paired with a cutting-edge music API and a team of horticulturalists to build AI-generated playlists that maximize houseplant health.',
-    tags: ['Dev', 'Branding', 'Backend'],
-    publishDate: new Date('2019-12-01'),
-    colorTheme: 'purple'
-    // No visualComponent - will use fallback
+    id: 'walls',
+    title: 'WALLS',
+    description: 'A comprehensive mental health assessment platform using PyTorch for stress, anxiety, and depression screening with interactive dashboards and local demo mode.',
+    tags: ['Python', 'Flask', 'PyTorch', 'Chart.js', 'Three.js', 'Firebase', 'Machine Learning'],
+    publishDate: new Date('2025-01-10'),
+    img: '/assets/WallsDemo2.gif',
+    img_alt: 'WALLS mental health platform demo showing assessment flow and dashboard',
+    colorTheme: 'purple',
+    visualComponent: 'WallsVisual',
+    projectTag: 'SinghDevs'
   },
   {
-    id: 'markdown-mystery-tour',
-    title: 'Markdown Mystery Tour',
-    description: 'An interactive guide through the world of markdown, featuring live editing, syntax highlighting, and collaborative storytelling.',
-    tags: ['Frontend', 'Education', 'Interactive'],
-    publishDate: new Date('2022-05-15'),
-    colorTheme: 'orange'
-    // No visualComponent - will use fallback
+    id: 'quantitative-pairs-trading',
+    title: 'Quantitative Pairs Trading',
+    description: 'A quantitative research pipeline using pairs trading strategies. Downloads historical stock data, identifies correlated pairs, generates mean-reversion signals using the Ornstein-Uhlenbeck process, and produces 25+ research-grade visualizations validating trading assumptions.',
+    tags: ['Python', 'Quantitative Finance', 'Data Science', 'Statistical Analysis', 'Machine Learning'],
+    publishDate: new Date('2024-06-15'),
+    colorTheme: 'cyan',
+    visualComponent: 'QuantitativeTradingVisual',
+    projectTag: 'SinghLearns'
+  },
+  {
+    id: 'data-science-projects',
+    title: 'High School Data Science',
+    description: 'Data science projects I made for assignments in high school using Python, Pandas, GeoPandas, NumPy, Scikit-learn, Matplotlib, and Seaborn.',
+    tags: ['Python', 'Data Science', 'Pandas', 'GeoPandas', 'NumPy', 'Scikit-learn', 'Matplotlib', 'Seaborn'],
+    publishDate: new Date('2024-05-01'),
+    colorTheme: 'cyan',
+    visualComponent: 'DataScienceVisual',
+    projectTag: 'SinghParlays'
   },
   {
     id: 'linear-algebra-visualizer',
-    title: 'Linear Algebra Visualizer',
-    description: 'Mathematical background generation system using matrix determinants and linear transformations to create abstract geometric patterns.',
-    tags: ['Math', 'Visualization', 'Generative'],
+    title: 'Background Generation System',
+    description: 'The entire background of this website is generated using brute-force linear algebra. The system searches for matrices with maximized determinants and renders abstract geometric patterns. Click to customize!',
+    tags: ['Math', 'Visualization', 'Generative', 'Linear Algebra'],
     publishDate: new Date('2024-03-20'),
     colorTheme: 'white',
-    visualComponent: 'LinearAlgebraVisual' // Custom component
+    visualComponent: 'LinearAlgebraVisual', // Custom component
+    projectTag: 'SinghParlays',
+    excludeFromWorkPage: true // This project is the background system, not a standalone project
   }
 ];
 

@@ -1,0 +1,11 @@
+{
+  "ou_baseline": {
+    "cagr": -0.54,
+    "sharpe": -1.01,
+    "max_drawdown": -1.12,
+    "total_return": -1.06,
+    "turnover": 49.49,
+    "n_trades": 98,
+    "n_pairs": 10
+  }
+}

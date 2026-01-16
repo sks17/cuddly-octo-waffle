@@ -20,6 +20,7 @@ export interface BlogMetadata {
 
 export interface BlogEntry extends BlogMetadata {
   category?: 'tech' | 'design' | 'thoughts' | 'updates'; // Optional categorization
+  categoryDisplay?: string; // Optional custom category display text
 }
 
 /**
@@ -32,53 +33,31 @@ export interface BlogEntry extends BlogMetadata {
  */
 export const blogRegistry: BlogEntry[] = [
   {
-    id: 'building-with-astro',
-    title: 'Building a Modern Portfolio with Astro and TypeScript',
-    description: 'An in-depth look at creating a performance-focused portfolio website using Astro\'s static site generation and TypeScript\'s type safety.',
+    id: 'mathematics-in-motion',
+    title: 'Mathematics in Motion: Generative Art with Linear Algebra',
+    description: 'Coming soon!',
     author: 'Saksham Singh',
-    publishDate: new Date('2024-12-15'),
+    publishDate: new Date('2026-01-01'),
     readTime: '8 min read',
-    tags: ['Astro', 'TypeScript', 'Performance'],
-    featuredImage: '/assets/stock-1.jpg',
-    featuredImageAlt: 'Code editor showing Astro and TypeScript files',
+    tags: ['Mathematics', 'Generative Art', 'Linear Algebra'],
+    featuredImage: '/assets/backgrounds/bg-main-dark-1440w.jpg',
+    featuredImageAlt: 'Colorful matrix visualization with geometric patterns',
     category: 'tech',
+    categoryDisplay: 'MATH / EXPLORATION',
     isHighlighted: true
   },
   {
-    id: 'design-systems-thinking',
-    title: 'Design Systems: Beyond Components and Tokens',
-    description: 'Exploring how design systems shape not just visual consistency, but the entire product development process and team collaboration.',
+    id: 'ai-resource-scarcity',
+    title: 'AI Usage limiting in Resource-Scarce environments',
+    description: 'Coming soon!',
     author: 'Saksham Singh',
-    publishDate: new Date('2024-11-28'),
-    readTime: '6 min read',
-    tags: ['Design Systems', 'Process', 'Collaboration'],
+    publishDate: new Date('2026-01-01'),
+    readTime: '8 min read',
+    tags: ['AI Safety', 'Resource Management'],
     featuredImage: '/assets/stock-2.jpg',
-    featuredImageAlt: 'Abstract representation of interconnected design elements',
-    category: 'design'
-  },
-  {
-    id: 'mathematics-in-motion',
-    title: 'Mathematics in Motion: Generative Art with Linear Algebra',
-    description: 'How mathematical concepts like matrix transformations and determinants create beautiful, dynamic visual patterns in generative art.',
-    author: 'Saksham Singh',
-    publishDate: new Date('2024-10-22'),
-    readTime: '12 min read',
-    tags: ['Mathematics', 'Generative Art', 'Linear Algebra'],
-    featuredImage: '/assets/stock-3.jpg',
-    featuredImageAlt: 'Mathematical equations overlaying geometric art patterns',
-    category: 'tech'
-  },
-  {
-    id: 'future-of-interfaces',
-    title: 'The Future of Human-Computer Interfaces',
-    description: 'Thoughts on where digital interfaces are heading, from voice and gesture to brain-computer interactions and spatial computing.',
-    author: 'Saksham Singh',
-    publishDate: new Date('2024-09-14'),
-    readTime: '5 min read',
-    tags: ['Future Tech', 'UX', 'Interfaces'],
-    featuredImage: '/assets/stock-4.jpg',
-    featuredImageAlt: 'Futuristic interface concepts with holographic elements',
-    category: 'thoughts'
+    featuredImageAlt: 'AI and resource management visualization',
+    category: 'tech',
+    categoryDisplay: 'AI SAFETY'
   }
 ];
 

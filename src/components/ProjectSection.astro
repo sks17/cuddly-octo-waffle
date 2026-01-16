@@ -11,6 +11,9 @@ import type { ProjectCard } from '../data/projectRegistry';
 // Import visual components
 import PaperPigeonVisual from './visuals/PaperPigeonVisual.astro';
 import LinearAlgebraVisual from './visuals/LinearAlgebraVisual.astro';
+import QuantitativeTradingVisual from './visuals/QuantitativeTradingVisual.astro';
+import WallsVisual from './visuals/WallsVisual.astro';
+import DataScienceVisual from './visuals/DataScienceVisual.astro';
 
 interface Props {
 	project: ProjectCard;
@@ -23,6 +26,9 @@ const { project, index } = Astro.props;
 const visualComponents = {
   'PaperPigeonVisual': PaperPigeonVisual,
   'LinearAlgebraVisual': LinearAlgebraVisual,
+  'QuantitativeTradingVisual': QuantitativeTradingVisual,
+  'WallsVisual': WallsVisual,
+  'DataScienceVisual': DataScienceVisual,
 };
 
 type VisualComponentType = keyof typeof visualComponents;
@@ -35,8 +41,14 @@ const VisualComponent = hasCustomVisual
 
 ---
 
-<a class="project-section" href={`/work/${project.id}`} data-color={project.colorTheme} data-index={index}>
-	<span class="project-tag">&gt; SinghDevs</span>
+<a 
+  class="project-section" 
+  href={`/work/${project.id}`} 
+  data-color={project.colorTheme} 
+  data-index={index}
+  style={project.cardHeight || project.cardMinHeight ? `${project.cardHeight ? `--card-height: ${project.cardHeight};` : ''} ${project.cardMinHeight ? `--card-min-height: ${project.cardMinHeight};` : ''}` : undefined}
+>
+	<span class="project-tag">&gt; {project.projectTag || 'SinghDevs'}</span>
 	<div class="project-bg parallax-bg" data-parallax-speed="0.5">
     <!-- Custom visual or fallback -->
     <div class="visual-container">
@@ -94,8 +106,8 @@ const VisualComponent = hasCustomVisual
 	.project-section {
 		position: relative;
 		width: 100vw;
-		height: 70vh;
-		min-height: 500px;
+		height: var(--card-height, 60vh);
+		min-height: var(--card-min-height, 450px);
 		display: flex;
 		align-items: center;
 		justify-content: center;
@@ -200,7 +212,7 @@ const VisualComponent = hasCustomVisual
 	}
 
 	.project-title {
-		margin: 0 0 1rem 0;
+		margin: 0.5rem 0 1rem 0;
 		font-size: var(--text-2xl);
 		font-weight: 700;
 		color: var(--gray-0);
@@ -307,6 +319,55 @@ const VisualComponent = hasCustomVisual
 
 		.project-description {
 			font-size: var(--text-lg);
+		}
+	}
+
+	/* ============================================================ */
+	/* MOBILE OPTIMIZATIONS - Project cards                        */
+	/* ============================================================ */
+	
+	@media (max-width: 49.9em) {
+		.project-section {
+			height: auto;
+			min-height: 400px;
+			/* Remove blur/grayscale on mobile - show all projects clearly */
+			opacity: 1;
+			filter: none;
+			margin-bottom: 2rem;
+		}
+
+		.project-tag {
+			top: 0.75rem;
+			left: 0.75rem;
+			padding: 0.375rem 0.75rem;
+			font-size: 0.625rem;
+		}
+
+		.project-content {
+			padding: 1.5rem;
+			max-width: 90%;
+		}
+
+		.project-title {
+			font-size: var(--text-xl);
+			margin: 0 0 0.75rem 0;
+		}
+
+		.project-description {
+			font-size: var(--text-sm);
+			margin: 0 0 0.75rem 0;
+		}
+
+		.tag {
+			padding: 0.2rem 0.5rem;
+			font-size: 0.75rem;
+		}
+
+		/* Remove hover/focus transform on mobile to prevent layout shifts */
+		.project-section:hover,
+		.project-section:focus-visible,
+		.project-section[data-focus="true"] {
+			transform: none;
 		}
 	}
 </style>

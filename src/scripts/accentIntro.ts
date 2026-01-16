@@ -11,8 +11,6 @@ import { setAccentHue } from './accentTheme';
 import { getMostRecentBackground } from './backgroundCache';
 
 const ANIMATION_DURATION = 1500; // 1.5 seconds as requested
-const COLOR_STOPS = 5; // Number of gradient stops
-const GRADIENT_ANGLE = 45; // Gradient angle in degrees
 
 /**
  * Convert HSL to hex color
@@ -68,7 +66,7 @@ function colorNameToHue(colorName: string): number {
  * Create smooth RGB gradient animation that ends at user's accent color
  */
 export function initAccentIntro(): void {
-  console.log('🎨 RGB Animation: Starting smooth gradient animation');
+  console.log('� RGB Animation: Starting smooth gradient animation');
   
   // Skip if user prefers reduced motion
   if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
@@ -94,49 +92,58 @@ export function initAccentIntro(): void {
     const easedProgress = 1 - Math.pow(1 - progress, 3); // Cubic ease-out
     
     if (progress < 1) {
-      // Create rainbow gradient that transitions to target color
-      const gradientColors: string[] = [];
+      // Smooth color cycling through spectrum to target
+      const currentHue = (elapsed * 0.24) % 360; // Cycle through all hues over duration
+      const finalHue = currentHue + (targetHueValue - currentHue) * easedProgress;
       
-      for (let i = 0; i < COLOR_STOPS; i++) {
-        // Start with rainbow colors cycling through spectrum
-        const baseHue = (i * 360 / COLOR_STOPS + elapsed * 0.2) % 360;
-        
-        // Gradually transition each stop toward the target hue
-        const currentHue = baseHue + (targetHueValue - baseHue) * easedProgress;
-        
-        // Adjust saturation and lightness for smooth transition
-        const saturation = 80 - (easedProgress * 10); // Start vibrant, end slightly muted
-        const lightness = 60 + (Math.sin(elapsed * 0.01 + i) * 10); // Subtle pulsing
-        
-        gradientColors.push(hslToHex(currentHue, saturation, lightness));
-      }
+      // Ensure consistent saturation and lightness for vibrant colors
+      const saturation = 85;
+      const baseLightness = 55;
       
-      // Apply gradient to CSS custom properties for accent elements
-      const gradientString = `linear-gradient(${GRADIENT_ANGLE}deg, ${gradientColors.join(', ')})`;
+      // Generate consistent colors for all accent variables
+      const lightColor = hslToHex(finalHue, Math.max(saturation - 15, 70), baseLightness + 20);
+      const regularColor = hslToHex(finalHue, saturation, baseLightness);
+      const darkColor = hslToHex(finalHue, Math.min(saturation + 10, 95), baseLightness - 20);
       
-      // Use the first color as the main accent for single-color elements
-      const mainColor = gradientColors[0];
-      const lightColor = hslToHex(targetHueValue, 70, 75);
-      const darkColor = hslToHex(targetHueValue, 90, 35);
-      
-      root.style.setProperty('--accent-regular-override', mainColor);
+      // Update all accent color variables consistently
       root.style.setProperty('--accent-light-override', lightColor);
+      root.style.setProperty('--accent-regular-override', regularColor);
       root.style.setProperty('--accent-dark-override', darkColor);
-      root.style.setProperty('--accent-gradient-override', gradientString);
+      
+      // Update gradient stops for consistent gradient effects
+      root.style.setProperty('--gradient-stop-1', lightColor);
+      root.style.setProperty('--gradient-stop-2', regularColor);
+      root.style.setProperty('--gradient-stop-3', darkColor);
       
       animationFrame = requestAnimationFrame(animate);
     } else {
-      // Animation complete - set final accent color
+      // Animation complete - smoothly transition to actual accent theme colors
       console.log('🎨 RGB Animation: Complete, setting final accent:', targetHue);
       
-      // Clear animation overrides
-      root.style.removeProperty('--accent-regular-override');
-      root.style.removeProperty('--accent-light-override');
-      root.style.removeProperty('--accent-dark-override');
-      root.style.removeProperty('--accent-gradient-override');
-      
-      // Set final accent theme
-      setAccentHue(targetHue);
+      // Generate the exact colors that accentTheme.ts would use
+      import('./accentTheme').then(({ updateAccentTheme }) => {
+        // Call updateAccentTheme to set the final colors smoothly
+        updateAccentTheme(targetHue);
+        
+        // Clean up our animation overrides after a brief delay
+        setTimeout(() => {
+          root.style.removeProperty('--accent-light-override');
+          root.style.removeProperty('--accent-regular-override');
+          root.style.removeProperty('--accent-dark-override');
+          root.style.removeProperty('--gradient-stop-1');
+          root.style.removeProperty('--gradient-stop-2');
+          root.style.removeProperty('--gradient-stop-3');
+        }, 100);
+      }).catch(() => {
+        // Fallback: just clear overrides and use setAccentHue
+        root.style.removeProperty('--accent-light-override');
+        root.style.removeProperty('--accent-regular-override');
+        root.style.removeProperty('--accent-dark-override');
+        root.style.removeProperty('--gradient-stop-1');
+        root.style.removeProperty('--gradient-stop-2');
+        root.style.removeProperty('--gradient-stop-3');
+        setAccentHue(targetHue);
+      });
     }
   };
   
@@ -155,5 +162,5 @@ export function initAccentIntro(): void {
  * Note: This animation always runs, so this function is mostly for compatibility
  */
 export function clearIntroSeen(): void {
-  console.log('🎨 RGB Animation: Note - this animation always runs on page load');
+  console.log('� RGB Animation: Note - this animation always runs on page load');
 }

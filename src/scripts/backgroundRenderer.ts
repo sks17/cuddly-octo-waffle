@@ -281,8 +281,9 @@ export async function renderFromSpec(spec: RenderSpec): Promise<HTMLCanvasElemen
     throw new Error('Failed to get canvas 2D context');
   }
   
-  // Fill background with black (matches backend behavior)
-  ctx.fillStyle = 'rgb(0, 0, 0)';
+  // Fill background - use slightly gray for light mode, black for dark mode
+  const isDarkMode = document.documentElement.classList.contains('theme-dark');
+  ctx.fillStyle = isDarkMode ? 'rgb(0, 0, 0)' : 'rgb(245, 245, 239)'; // #f5f5ef in light mode
   ctx.fillRect(0, 0, canvas.width, canvas.height);
   
   // Render all blocks

@@ -5,9 +5,22 @@ import Hero from '../components/Hero.astro';
 import PortfolioPreview from '../components/PortfolioPreview.astro';
 import BaseLayout from '../layouts/BaseLayout.astro';
 import HomepageContact from '../components/HomepageContact.astro';
+import { projectRegistry } from '../data/projectRegistry';
 
-const projects = (await getCollection('work')).sort(
+const allProjects = (await getCollection('work')).sort(
 	(a, b) => b.data.publishDate.valueOf() - a.data.publishDate.valueOf(),
+);
+
+// Filter out projects marked to exclude from work page
+const excludedIds = projectRegistry
+	.filter(p => p.excludeFromWorkPage)
+	.map(p => p.id);
+
+// Also exclude specific projects from work page
+const manualExclusions = ['bloom-box', 'markdown-mystery-tour'];
+
+const projects = allProjects.filter(project => 
+	!excludedIds.includes(project.slug) && !manualExclusions.includes(project.slug)
 );
 ---
 

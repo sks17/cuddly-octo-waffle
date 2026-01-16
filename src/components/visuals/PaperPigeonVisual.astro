@@ -2,126 +2,294 @@
 /**
  * Paper Pigeon Visual Component
  * 
- * Custom interactive visual for the Paper Pigeon project card.
- * Demonstrates real-time chat bubbles animation.
+ * Custom visual for the Paper Pigeon project card.
+ * Features 3D graph mapping demo with tech stack and pigeon branding.
  */
 ---
 
-<div class="paper-pigeon-visual" id="paper-pigeon-visual">
-  <div class="chat-container">
-    <div class="message bubble-1">Hello! 👋</div>
-    <div class="message bubble-2">Building something amazing...</div>
-    <div class="message bubble-3">Real-time collaboration ✨</div>
+<div class="paper-pigeon-visual">
+  <div class="pp-container">
+    <!-- Left: GIF -->
+    <div class="pp-gif-col">
+      <div class="pp-demo">
+        <img src="/assets/PaperPigeonDemo.gif" alt="Paper Pigeon 3D Graph Demo" class="pp-gif" />
+      </div>
+    </div>
+
+    <!-- Center: Title and Description -->
+    <div class="pp-center-col">
+      <div class="pp-header">
+        <img src="/assets/PaperPigeon.png" alt="Paper Pigeon Logo" class="pp-logo" />
+        <h2 class="pp-title">Paper Pigeon</h2>
+      </div>
+      <div class="pp-description">
+        <p>3D force-directed graph mapping the University of Washington Allen School's research ecosystem. Features RAG pipelines for paper Q&A, resume matching against researcher profiles, and VR rendering paths.</p>
+      </div>
+    </div>
+
+    <!-- Right: Technologies Table -->
+    <div class="pp-tech-col">
+      <div class="pp-tech">
+        <h3 class="tech-title">Technologies</h3>
+        <div class="tech-grid">
+          <div class="tech-item">React 19</div>
+          <div class="tech-item">TypeScript</div>
+          <div class="tech-item">Three.js</div>
+          <div class="tech-item">AWS Bedrock</div>
+          <div class="tech-item">DynamoDB</div>
+        </div>
+      </div>
+    </div>
   </div>
+
+  <!-- Bottom right: Pigeon illustration -->
+  <img src="/assets/DesignPiece.png" alt="Paper Pigeon Illustration" class="pp-pigeon" />
 </div>
-
-<script>
-  function initPaperPigeonVisual() {
-    const container = document.getElementById('paper-pigeon-visual');
-    if (!container) return;
-
-    const messages = container.querySelectorAll('.message');
-    let currentMessage = 0;
-    
-    // Check for reduced motion preference
-    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (prefersReducedMotion) {
-      // Show all messages immediately without animation
-      messages.forEach(msg => {
-        (msg as HTMLElement).style.opacity = '1';
-        (msg as HTMLElement).style.transform = 'translateY(0)';
-      });
-      return;
-    }
-
-    function showNextMessage() {
-      if (currentMessage < messages.length) {
-        const msg = messages[currentMessage] as HTMLElement;
-        msg.style.opacity = '1';
-        msg.style.transform = 'translateY(0) scale(1)';
-        currentMessage++;
-        
-        if (currentMessage < messages.length) {
-          setTimeout(showNextMessage, 1200);
-        } else {
-          // Reset after all messages shown
-          setTimeout(() => {
-            messages.forEach(msg => {
-              (msg as HTMLElement).style.opacity = '0';
-              (msg as HTMLElement).style.transform = 'translateY(20px) scale(0.9)';
-            });
-            currentMessage = 0;
-            setTimeout(showNextMessage, 800);
-          }, 2000);
-        }
-      }
-    }
-
-    // Start animation
-    setTimeout(showNextMessage, 500);
-  }
-
-  // Initialize when component is in view
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initPaperPigeonVisual);
-  } else {
-    initPaperPigeonVisual();
-  }
-</script>
 
 <style>
   .paper-pigeon-visual {
     width: 100%;
-    height: 200px;
+    height: 100%;
     display: flex;
     align-items: center;
     justify-content: center;
-    background: linear-gradient(135deg, rgba(0, 150, 255, 0.1), rgba(0, 100, 200, 0.05));
-    border-radius: 8px;
+    background: white;
     position: relative;
     overflow: hidden;
   }
 
-  .chat-container {
+  /* Main container - 3 equal columns */
+  .pp-container {
+    display: grid;
+    grid-template-columns: 350px 1fr 180px;
+    gap: 2.5rem;
+    align-items: center;
+    max-width: 80%;
+    width: 100%;
+    padding: 0.5rem 2rem;
+  }
+
+  /* Left column: GIF */
+  .pp-gif-col {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .pp-demo {
+    background: transparent;
+    border: none;
+    border-radius: 8px;
+    padding: 0;
+    width: 100%;
+    max-height: 350px;
+  }
+
+  .pp-gif {
+    width: 100%;
+    height: auto;
+    max-height: 320px;
+    object-fit: contain;
+    border-radius: 4px;
+    display: block;
+  }
+
+  /* Center column: Title and Description */
+  .pp-center-col {
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
-    padding: 1rem;
-    max-width: 250px;
+    gap: 1.5rem;
+    justify-content: center;
   }
 
-  .message {
-    padding: 0.5rem 1rem;
-    border-radius: 16px;
-    color: white;
-    font-size: 0.9rem;
-    opacity: 0;
-    transform: translateY(20px) scale(0.9);
-    transition: opacity 0.6s cubic-bezier(0.25, 0.1, 0.25, 1), 
-                transform 0.6s cubic-bezier(0.25, 0.1, 0.25, 1);
+  .pp-header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
   }
 
-  .bubble-1 {
-    background: linear-gradient(135deg, #667eea, #764ba2);
-    align-self: flex-end;
+  .pp-logo {
+    height: 36px;
+    width: auto;
+    object-fit: contain;
   }
 
-  .bubble-2 {
-    background: linear-gradient(135deg, #f093fb, #f5576c);
-    align-self: flex-start;
+  .pp-title {
+    font-size: 2.2rem;
+    font-weight: 700;
+    color: #2c3e50;
+    margin: 0;
   }
 
-  .bubble-3 {
-    background: linear-gradient(135deg, #4facfe, #00f2fe);
-    align-self: flex-end;
+  .pp-description {
+    padding: 0 0.5rem;
+  }
+
+  .pp-description p {
+    font-size: 1.05rem;
+    line-height: 1.65;
+    color: #4a5568;
+    margin: 0;
+    text-align: left;
+  }
+
+  /* Right column: Technologies */
+  .pp-tech-col {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .pp-tech {
+    border: 2px solid #e9ecef;
+    border-radius: 8px;
+    padding: 1rem 0.85rem;
+    background: #f8f9fa;
+    width: 100%;
+  }
+
+  .tech-title {
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: #2c3e50;
+    margin: 0 0 0.75rem 0;
+    text-align: center;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .tech-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+  }
+
+  .tech-item {
+    padding: 0.35rem 0.6rem;
+    background: white;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    font-size: 0.68rem;
+    color: #495057;
+    text-align: center;
+    font-weight: 500;
+    white-space: nowrap;
+  }
+
+  /* Bottom right: Pigeon illustration */
+  .pp-pigeon {
+    position: absolute;
+    bottom: 1.5rem;
+    right: 1.5rem;
+    width: 90px;
+    height: auto;
+    opacity: 0.8;
+    pointer-events: none;
+  }
+
+  /* Responsive adjustments */
+  @media (max-width: 1400px) {
+    .pp-container {
+      grid-template-columns: 320px 1fr 170px;
+      gap: 2rem;
+      max-width: 85%;
+    }
+
+    .pp-title {
+      font-size: 1.65rem;
+    }
+
+    .pp-demo {
+      max-height: 320px;
+    }
+
+    .pp-gif {
+      max-height: 290px;
+    }
+  }
+
+  @media (max-width: 1200px) {
+    .pp-container {
+      grid-template-columns: 1fr;
+      gap: 1.75rem;
+      max-width: 600px;
+      padding: 1.5rem;
+    }
+
+    .pp-demo {
+      max-height: 280px;
+      max-width: 400px;
+      margin: 0 auto;
+    }
+
+    .pp-gif {
+      max-height: 250px;
+    }
+
+    .pp-description p {
+      text-align: center;
+    }
+
+    .pp-tech {
+      max-width: 400px;
+      margin: 0 auto;
+    }
+
+    .tech-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+    }
+  }
+
+  /* Mobile optimization */
+  @media (max-width: 49.9em) {
+    .pp-container {
+      max-width: 95%;
+      padding: 1rem;
+      gap: 1.25rem;
+    }
+
+    .pp-header {
+      gap: 0.5rem;
+    }
+
+    .pp-logo {
+      height: 30px;
+    }
+
+    .pp-title {
+      font-size: 1.3rem;
+    }
+
+    .pp-demo {
+      max-height: 200px;
+    }
+
+    .pp-gif {
+      max-height: 180px;
+    }
+
+    .pp-description p {
+      font-size: 0.85rem;
+      line-height: 1.5;
+    }
+
+    .tech-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    .pp-pigeon {
+      width: 65px;
+      bottom: 1rem;
+      right: 1rem;
+    }
   }
 
   /* Reduced motion support */
   @media (prefers-reduced-motion: reduce) {
-    .message {
-      transition: none;
-      opacity: 1;
-      transform: translateY(0) scale(1);
+    .pp-gif {
+      animation: none;
     }
   }
 </style>

@@ -40,6 +40,7 @@ Add your new project entry to the `projectRegistry` array:
 - `publishDate`: Determines order on homepage (newest first)
 - `colorTheme`: Affects card styling and accent colors
 - `visualComponent`: Optional custom component name (see step 2)
+- `projectTag`: Optional tag label displayed on the card (e.g., 'SinghDevs', 'SinghLearns')
 
 ### 2. Create Custom Visual (Optional)
 
@@ -172,6 +173,14 @@ Each theme provides different styling:
 - **`orange`**: Orange/amber accent colors
 - **`white`**: Minimalist white/gray theme
 
+### Project Tags
+
+The optional `projectTag` field allows you to categorize projects with a visible label on the homepage card:
+- **`SinghDevs`**: Development and engineering projects
+- **`SinghLearns`**: Educational and research projects
+- **`SinghParlays`**: Business and product experiments
+- Or create your own custom tags as needed
+
 ### Visual Components
 
 Custom visual components replace the standard image on homepage cards:
@@ -223,3 +232,58 @@ See the existing projects in [`src/data/projectRegistry.ts`](src/data/projectReg
 - Projects with custom visuals (Paper Pigeon, Linear Algebra Visualizer)
 - Projects with fallback images (Bloom Box, Markdown Mystery Tour)
 - Different color themes and tag combinations
+
+### Complete Example: Adding WALLS Project
+
+Here's a real-world example of adding the WALLS mental health platform project:
+
+**Step 1: Move assets to public/assets/**
+```powershell
+Move-Item "WallsBigSplash.png" "public/assets/WallsBigSplash.png"
+Move-Item "WallsDescriptionSplash.png" "public/assets/WallsDescriptionSplash.png"
+Move-Item "WallsDemo2.gif" "public/assets/WallsDemo2.gif"
+```
+
+**Step 2: Add to projectRegistry.ts**
+```typescript
+{
+  id: 'walls',
+  title: 'WALLS',
+  description: 'A comprehensive mental health assessment platform using PyTorch for stress, anxiety, and depression screening with interactive dashboards and local demo mode.',
+  tags: ['Python', 'Flask', 'PyTorch', 'Chart.js', 'Three.js', 'Firebase', 'Machine Learning'],
+  publishDate: new Date('2025-01-10'),
+  img: '/assets/WallsDemo2.gif',
+  img_alt: 'WALLS mental health platform demo showing assessment flow and dashboard',
+  colorTheme: 'purple',
+  projectTag: 'SinghDevs'
+}
+```
+
+**Step 3: Create src/content/work/walls.md**
+```markdown
+---
+title: WALLS Mental Health Assessment Platform
+publishDate: 2025-01-10 00:00:00
+img: /assets/WallsDemo2.gif
+img_alt: WALLS mental health platform demo showing assessment flow and interactive dashboard
+description: |
+  A comprehensive mental health assessment platform using PyTorch for stress, anxiety, and depression screening with interactive dashboards and local demo mode.
+tags:
+  - SinghDevs
+  - Python 3.12
+  - Flask
+  - PyTorch
+  - Machine Learning
+---
+
+## Overview
+[Project content here...]
+```
+
+**Result:**
+- ✅ Homepage card appears second (sorted by publishDate)
+- ✅ Purple color theme applied
+- ✅ "SinghDevs" tag displays on card
+- ✅ GIF plays on homepage card
+- ✅ Detail page accessible at `/work/walls`
+- ✅ All assets load correctly

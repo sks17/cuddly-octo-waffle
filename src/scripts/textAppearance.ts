@@ -8,7 +8,7 @@
  * - Ensures text is hidden until animation starts
  */
 
-const ENABLE_ONE_TIME_TEXT_ANIMATIONS = false; // Set to true to enable one-time animations
+const ENABLE_ONE_TIME_TEXT_ANIMATIONS = true; // Set to true to enable one-time animations
 const DEBUG_MODE = false; // Set to true for debug logging
 
 // Callback functions to run after all animations complete
@@ -105,6 +105,14 @@ export function initTextAppearance(): void {
         (button as HTMLElement).style.setProperty('opacity', '1', 'important');
       }
     });
+    
+    // CRITICAL: Trigger callbacks immediately since animations are skipped
+    // This ensures hero transition and background still happen on repeat visits
+    setTimeout(() => {
+      animationCompleteCallbacks.forEach(callback => callback());
+      window.dispatchEvent(new CustomEvent('textAnimationComplete'));
+    }, 0);
+    
     return;
   }
 

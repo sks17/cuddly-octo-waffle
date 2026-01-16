@@ -3,7 +3,7 @@
  * 
  * Creates a smooth rainbow gradient animation on every page load that cycles through
  * all colors before settling on the user's current accent color. Uses requestAnimationFrame
- * for smooth 60fps animation and always runs (no cookies).
+ * for smooth 60fps animation. Checks cookies to skip animation on repeat visits.
  */
 
 import { getState } from './backgroundState';
@@ -11,6 +11,32 @@ import { setAccentHue } from './accentTheme';
 import { getMostRecentBackground } from './backgroundCache';
 
 const ANIMATION_DURATION = 1500; // 1.5 seconds as requested
+const ENABLE_ONE_TIME_RGB_ANIMATION = true; // Set to true to enable one-time animations
+
+/**
+ * Cookie management for one-time RGB animation
+ */
+function getCookie(name: string): string | null {
+  const value = `; ${document.cookie}`;
+  const parts = value.split(`; ${name}=`);
+  if (parts.length === 2) return parts.pop()?.split(';').shift() || null;
+  return null;
+}
+
+function setCookie(name: string, value: string, days: number = 365): void {
+  const expires = new Date(Date.now() + days * 864e5).toUTCString();
+  document.cookie = `${name}=${value}; expires=${expires}; path=/`;
+}
+
+function hasSeenRGBAnimation(): boolean {
+  if (!ENABLE_ONE_TIME_RGB_ANIMATION) return false;
+  return getCookie('rgb_anim_seen') === 'true';
+}
+
+function markRGBAnimationSeen(): void {
+  if (!ENABLE_ONE_TIME_RGB_ANIMATION) return;
+  setCookie('rgb_anim_seen', 'true');
+}
 
 /**
  * Convert HSL to hex color
@@ -25,6 +51,7 @@ function hslToHex(h: number, s: number, l: number): string {
   };
   return `#${f(0)}${f(8)}${f(4)}`;
 }
+
 
 /**
  * Get the target accent hue from user's most recent choice
@@ -66,13 +93,24 @@ function colorNameToHue(colorName: string): number {
  * Create smooth RGB gradient animation that ends at user's accent color
  */
 export function initAccentIntro(): void {
-  console.log('� RGB Animation: Starting smooth gradient animation');
+  console.log('🌈 RGB Animation: Initializing');
+  
+  // Check if animation already seen
+  if (hasSeenRGBAnimation()) {
+    console.log('⏭️ RGB Animation: Already seen, setting final color immediately');
+    const targetHue = getTargetAccentHue();
+    setAccentHue(targetHue);
+    return;
+  }
+  
+  console.log('🎨 RGB Animation: Starting smooth gradient animation');
   
   // Skip if user prefers reduced motion
   if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
     console.log('🎨 RGB Animation: Prefers reduced motion, setting final color immediately');
     const targetHue = getTargetAccentHue();
     setAccentHue(targetHue);
+    markRGBAnimationSeen();
     return;
   }
   
@@ -119,6 +157,7 @@ export function initAccentIntro(): void {
     } else {
       // Animation complete - smoothly transition to actual accent theme colors
       console.log('🎨 RGB Animation: Complete, setting final accent:', targetHue);
+      markRGBAnimationSeen(); // Mark as seen after first completion
       
       // Generate the exact colors that accentTheme.ts would use
       import('./accentTheme').then(({ updateAccentTheme }) => {

@@ -3,7 +3,18 @@
  * 
  * Transitions the hero section from center-aligned to left-aligned
  * after text animations complete. Simply removes the auto margin centering.
+ * If animations are skipped, applies final state immediately.
  */
+
+/**
+ * Check if animations have been seen (cookie system)
+ */
+function hasSeenAnimations(): boolean {
+  const value = `; ${document.cookie}`;
+  const parts = value.split(`; text_anim_seen_=`);
+  if (parts.length === 2) return parts.pop()?.split(';').shift() === 'true';
+  return false;
+}
 
 function applyThemeAwareStyles(element: HTMLElement, isDark: boolean): void {
   const bgColor = isDark ? 'rgba(0, 0, 0, 1)' : 'rgba(255, 255, 255, 0.95)';
@@ -28,8 +39,12 @@ export function initHeroTransition(): void {
   // Check for reduced motion preference
   const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   
+  // Check if animations were already seen (repeat visit)
+  const animationsSkipped = hasSeenAnimations();
+  
   // Shorter breathing pause since we're using transforms
-  const breathingDelay = prefersReducedMotion ? 0 : 300;
+  // No delay if animations were skipped
+  const breathingDelay = animationsSkipped ? 0 : (prefersReducedMotion ? 0 : 300);
 
   // Listen for theme changes and update backgrounds
   const updateThemeStyles = () => {
@@ -65,7 +80,8 @@ export function initHeroTransition(): void {
     [title, tagline, roles].forEach(element => {
       if (element) {
         // Set up smooth transitions for all properties including transform
-        const transition = prefersReducedMotion ? 'none' : 'all 2.5s cubic-bezier(0.23, 1, 0.32, 1)';
+        // No transition if animations were skipped or reduced motion preferred
+        const transition = (animationsSkipped || prefersReducedMotion) ? 'none' : 'all 2.5s cubic-bezier(0.23, 1, 0.32, 1)';
         element.style.transition = transition;
         element.style.willChange = 'transform, opacity, background-color, padding';
         
@@ -97,7 +113,7 @@ export function initHeroTransition(): void {
       // Apply both the transform movement AND the alignment change simultaneously
       // so text transitions from center to left-aligned during the slide
       heroDiv.style.transform = `translateX(${translateX}px)`;
-      heroDiv.style.transition = prefersReducedMotion ? 'none' : 'transform 2.5s cubic-bezier(0.23, 1, 0.32, 1)';
+      heroDiv.style.transition = (animationsSkipped || prefersReducedMotion) ? 'none' : 'transform 2.5s cubic-bezier(0.23, 1, 0.32, 1)';
       
       // Change alignment class at the start of the slide so text alignment transitions during movement
       heroDiv.classList.remove('center');
@@ -106,7 +122,7 @@ export function initHeroTransition(): void {
       // Don't remove the transform - keep boxes in their final left position
       // The transform keeps the boxes where they slid to, preventing them from sliding back
       
-    }, 200); // Small delay to let boxes appear first
+    }, animationsSkipped ? 0 : 200); // No delay if animations were skipped
     
   }, breathingDelay);
   

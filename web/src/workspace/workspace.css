@@ -1,0 +1,653 @@
+/* Workspace — Dockview tab strip + custom floating/snap layer over a wallpaper. */
+
+/* ── page + scroll-reveal ─────────────────────────────────────────────── */
+.wp-page {
+  position: relative;
+  height: 100dvh;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.22) transparent;
+}
+.wp-page::-webkit-scrollbar {
+  width: 11px;
+}
+.wp-page::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.18);
+  border-radius: 999px;
+  border: 3px solid transparent;
+  background-clip: padding-box;
+}
+.wp-page::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
+  background-clip: padding-box;
+}
+.wp-page::-webkit-scrollbar-track {
+  background: transparent;
+}
+.wp-intro {
+  position: relative;
+  height: 100dvh;
+  overflow: hidden;
+  display: flex;
+  align-items: flex-end;
+  background: #07070a;
+}
+.wp-intro__art {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+.wp-intro__scrim {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to bottom, rgba(5, 5, 8, 0.4) 0%, rgba(5, 5, 8, 0.3) 40%, rgba(5, 5, 8, 0.88) 100%);
+}
+.wp-intro__back {
+  position: absolute;
+  top: 18px;
+  left: 22px;
+  z-index: 3;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.8);
+}
+.wp-intro__back:hover {
+  color: #fff;
+}
+.wp-intro__copy {
+  position: relative;
+  z-index: 2;
+  width: min(1100px, 92%);
+  margin: 0 auto;
+  padding: 0 24px 64px;
+}
+.wp-intro__title {
+  font-size: clamp(40px, 8vw, 74px);
+  font-weight: 800;
+  letter-spacing: -0.035em;
+  line-height: 1;
+  margin-top: 12px;
+}
+.wp-intro__blurb {
+  margin-top: 14px;
+  font-size: 15px;
+  color: rgba(255, 255, 255, 0.76);
+  max-width: 56ch;
+}
+.wp-intro__hint {
+  margin-top: 24px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0.05em;
+  color: var(--brand);
+  animation: wp-bounce 1.8s ease-in-out infinite;
+}
+@keyframes wp-bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(6px); }
+}
+
+/* ── workspace shell (sticky) ─────────────────────────────────────────── */
+.wp-root {
+  position: sticky;
+  top: 0;
+  height: 100dvh;
+  overflow: hidden;
+  background: #07070a;
+  --wp-tabbar-h: 36px;
+  isolation: isolate;
+}
+.wp-bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+}
+.wp-bg__art {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+.wp-bg__tint {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(130% 100% at 50% -10%, rgba(6, 6, 12, 0.22), rgba(6, 6, 12, 0.58) 75%);
+}
+
+/* stage: where floating windows live; clicks fall through to the dock */
+.wp-stage {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: var(--wp-tabbar-h);
+  bottom: 64px;
+  z-index: 2;
+  pointer-events: none;
+}
+.wp-stage > * {
+  pointer-events: auto;
+}
+
+/* ── Dockview (transparent, thin tab strip) ───────────────────────────── */
+.wp-dock {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  --dv-background-color: transparent;
+  --dv-group-view-background-color: transparent;
+  --dv-tabs-and-actions-container-background-color: rgba(8, 8, 11, 0.6);
+  --dv-activegroup-visiblepanel-tab-background-color: rgba(255, 255, 255, 0.1);
+  --dv-inactivegroup-visiblepanel-tab-background-color: transparent;
+  --dv-activegroup-hiddenpanel-tab-background-color: transparent;
+  --dv-inactivegroup-hiddenpanel-tab-background-color: transparent;
+  --dv-tabs-container-height: var(--wp-tabbar-h);
+  --dv-tab-divider-color: transparent;
+  --dv-separator-border: rgba(255, 255, 255, 0.06);
+  --dv-activegroup-visiblepanel-tab-color: var(--fg);
+  --dv-inactivegroup-visiblepanel-tab-color: var(--muted-foreground);
+  --dv-icon-hover-background-color: rgba(255, 255, 255, 0.08);
+}
+.wp-dock .dv-tabs-and-actions-container {
+  height: var(--wp-tabbar-h);
+  min-height: var(--wp-tabbar-h);
+  backdrop-filter: blur(10px);
+}
+.wp-dock .dv-tab {
+  font-size: 12.5px;
+  min-height: var(--wp-tabbar-h);
+}
+/* confine each panel's content to the area below the tab bar */
+.wp-dock .dv-react-part {
+  position: relative;
+}
+
+/* ── cards / windows ──────────────────────────────────────────────────── */
+.wp-card {
+  background: rgba(15, 15, 21, 0.93);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: 0 14px 44px -14px rgba(0, 0, 0, 0.72);
+  overflow: hidden;
+  color: var(--fg);
+}
+.wp-card.is-active {
+  border-color: rgba(139, 140, 247, 0.5);
+  box-shadow: 0 26px 66px -16px rgba(0, 0, 0, 0.86), 0 0 0 1px rgba(139, 140, 247, 0.25);
+}
+.wp-card--tabbed {
+  position: absolute;
+  inset: 12px;
+  display: flex;
+  flex-direction: column;
+}
+.wp-window {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+}
+.wp-window.is-snapped {
+  border-radius: 8px;
+}
+.wp-max {
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  top: calc(var(--wp-tabbar-h) + 8px);
+  bottom: 72px;
+  z-index: 40;
+  display: flex;
+  flex-direction: column;
+}
+
+/* compact toolbar-style header */
+.wp-winbar {
+  height: 26px;
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 4px 0 6px;
+  background: rgba(255, 255, 255, 0.035);
+  border-bottom: 1px solid var(--border);
+  cursor: grab;
+  user-select: none;
+}
+.wp-winbar:active {
+  cursor: grabbing;
+}
+.wp-winbar__grip {
+  display: inline-flex;
+  align-items: center;
+  color: var(--dim);
+}
+.wp-winbar__title {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--muted-foreground);
+  letter-spacing: -0.01em;
+  max-width: 58%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.wp-winbar__spacer {
+  flex: 1;
+}
+.wp-winbtn {
+  width: 22px;
+  height: 22px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 5px;
+  color: var(--muted-foreground);
+}
+.wp-winbtn:hover {
+  background: rgba(255, 255, 255, 0.09);
+  color: var(--fg);
+}
+.wp-window__content {
+  flex: 1;
+  min-height: 0;
+  position: relative;
+  overflow: hidden;
+}
+
+/* resize handles */
+.wp-resize {
+  position: absolute;
+  z-index: 3;
+}
+.wp-resize--n { top: -3px; left: 10px; right: 10px; height: 8px; cursor: ns-resize; }
+.wp-resize--s { bottom: -3px; left: 10px; right: 10px; height: 8px; cursor: ns-resize; }
+.wp-resize--e { right: -3px; top: 10px; bottom: 10px; width: 8px; cursor: ew-resize; }
+.wp-resize--w { left: -3px; top: 10px; bottom: 10px; width: 8px; cursor: ew-resize; }
+.wp-resize--ne { top: -4px; right: -4px; width: 14px; height: 14px; cursor: nesw-resize; }
+.wp-resize--nw { top: -4px; left: -4px; width: 14px; height: 14px; cursor: nwse-resize; }
+.wp-resize--se { bottom: -4px; right: -4px; width: 16px; height: 16px; cursor: nwse-resize; }
+.wp-resize--sw { bottom: -4px; left: -4px; width: 14px; height: 14px; cursor: nesw-resize; }
+
+/* ── snap / dock preview ──────────────────────────────────────────────── */
+.wp-snap-preview {
+  position: absolute;
+  z-index: 5;
+  border: 2px dashed rgba(139, 140, 247, 0.85);
+  background: rgba(139, 140, 247, 0.14);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+.wp-snap-preview--tab {
+  border-style: solid;
+  background: rgba(139, 140, 247, 0.2);
+  border-radius: 0 0 10px 10px;
+}
+.wp-snap-preview__label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #e7e8ff;
+  background: rgba(16, 16, 26, 0.78);
+  padding: 4px 12px;
+  border-radius: 999px;
+}
+
+/* ── panel body ───────────────────────────────────────────────────────── */
+.wp-body {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+.wp-body__meta {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border-soft);
+}
+.wp-body__type {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--brand);
+}
+.wp-body__id {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--fg);
+  background: rgba(255, 255, 255, 0.06);
+  padding: 2px 7px;
+  border-radius: 5px;
+}
+.wp-body__mode {
+  margin-left: auto;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  color: var(--muted-foreground);
+}
+.wp-body__content {
+  flex: 1;
+  min-height: 0;
+}
+.wp-body__content .wp-scroll__viewport {
+  padding: 12px;
+}
+.wp-body__actions {
+  flex: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 8px 12px;
+  border-top: 1px solid var(--border-soft);
+}
+.wp-btn {
+  font-size: 11.5px;
+  padding: 5px 10px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  color: var(--fg);
+  background: rgba(255, 255, 255, 0.03);
+}
+.wp-btn:hover {
+  background: rgba(255, 255, 255, 0.09);
+}
+.wp-btn--primary {
+  background: var(--brand);
+  color: #0b0b12;
+  border-color: transparent;
+  font-weight: 600;
+}
+.wp-btn--primary:hover {
+  opacity: 0.92;
+  background: var(--brand);
+}
+
+/* panel-type placeholders */
+.wp-notes {
+  width: 100%;
+  height: 100%;
+  resize: none;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.25) transparent;
+  background: rgba(0, 0, 0, 0.22);
+  border: 1px solid var(--border-soft);
+  border-radius: 6px;
+  color: var(--fg);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  padding: 8px;
+}
+.wp-tree {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--muted-foreground);
+}
+.wp-tree li {
+  padding: 2px 0;
+  white-space: pre;
+}
+.wp-preview {
+  height: 100%;
+  min-height: 110px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px dashed var(--border);
+  border-radius: 8px;
+  color: var(--muted-foreground);
+  font-size: 12px;
+  background: repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.02) 0 10px, transparent 10px 20px);
+}
+.wp-term {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: #a7f3d0;
+  background: rgba(0, 0, 0, 0.35);
+  border-radius: 6px;
+  padding: 10px;
+  white-space: pre-wrap;
+}
+.wp-settings {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.wp-setting {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 12.5px;
+}
+.wp-switch {
+  width: 34px;
+  height: 18px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.12);
+  position: relative;
+  flex: none;
+}
+.wp-switch.on {
+  background: var(--brand);
+}
+.wp-switch::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #fff;
+  transition: transform 0.15s;
+}
+.wp-switch.on::after {
+  transform: translateX(16px);
+}
+
+/* ── command line ─────────────────────────────────────────────────────── */
+.wp-cli {
+  position: absolute;
+  left: 16px;
+  right: 16px;
+  bottom: 12px;
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  pointer-events: none;
+}
+.wp-cli__log {
+  pointer-events: none;
+  align-self: flex-start;
+  max-width: min(780px, 100%);
+  height: 150px;
+}
+.wp-cli__log .wp-scroll__viewport {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 1px;
+}
+.wp-cli__line {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  white-space: pre-wrap;
+  padding: 1px 8px;
+  border-radius: 4px;
+  width: fit-content;
+  max-width: 100%;
+}
+.wp-cli__line--input { color: #cbd0ff; }
+.wp-cli__line--ok { color: var(--muted-foreground); background: rgba(10, 10, 14, 0.55); }
+.wp-cli__line--err { color: #fca5a5; background: rgba(40, 12, 12, 0.55); }
+.wp-cli__prompt {
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 42px;
+  padding: 0 14px;
+  background: rgba(10, 10, 14, 0.82);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: 0 12px 34px -12px rgba(0, 0, 0, 0.7);
+}
+.wp-cli__caret {
+  color: var(--brand);
+  font-family: var(--font-mono);
+  font-size: 14px;
+}
+.wp-cli__input {
+  flex: 1;
+  min-width: 0;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--fg);
+  font-family: var(--font-mono);
+  font-size: 13px;
+}
+.wp-cli__input::placeholder {
+  color: var(--dim);
+}
+
+/* ── custom tab (Dockview defaultTabComponent) ────────────────────────── */
+.wp-dock .dv-tab {
+  padding: 0;
+}
+.wp-tab {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 100%;
+  padding: 0 4px 0 11px;
+  max-width: 190px;
+  cursor: grab;
+  user-select: none;
+}
+.wp-tab:active {
+  cursor: grabbing;
+}
+.wp-tab__title {
+  font-size: 12.5px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.wp-tab__close {
+  width: 18px;
+  height: 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  color: var(--muted-foreground);
+  opacity: 0;
+  transition: opacity 0.12s, background 0.12s;
+}
+.wp-tab:hover .wp-tab__close {
+  opacity: 1;
+}
+.wp-tab__close:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: var(--fg);
+}
+
+/* ── tab-dock highlight (organizer strip only) ────────────────────────── */
+.wp-tabdock {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: var(--wp-tabbar-h);
+  z-index: 45;
+  background: rgba(139, 140, 247, 0.18);
+  border-bottom: 2px solid rgba(139, 140, 247, 0.9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+.wp-tabdock__label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #e7e8ff;
+  background: rgba(16, 16, 26, 0.72);
+  padding: 2px 10px;
+  border-radius: 999px;
+}
+
+.wp-max .wp-winbar__title {
+  color: var(--fg);
+  font-weight: 600;
+  font-size: 12.5px;
+  max-width: none;
+}
+
+/* ── reusable scroll area (Base UI) ───────────────────────────────────── */
+.wp-scroll {
+  position: relative;
+  overflow: hidden;
+}
+.wp-scroll__viewport {
+  width: 100%;
+  height: 100%;
+  overscroll-behavior: contain;
+  outline: none;
+}
+.wp-scroll__bar {
+  display: flex;
+  touch-action: none;
+  user-select: none;
+  opacity: 0;
+  transition: opacity 0.2s;
+  z-index: 3;
+}
+.wp-scroll__bar[data-orientation='vertical'] {
+  width: 9px;
+  padding: 2px;
+}
+.wp-scroll__bar[data-orientation='horizontal'] {
+  height: 9px;
+  padding: 2px;
+  flex-direction: column;
+}
+.wp-scroll:hover .wp-scroll__bar,
+.wp-scroll__bar[data-scrolling] {
+  opacity: 1;
+}
+.wp-scroll__thumb {
+  flex: 1;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.2);
+  transition: background 0.15s;
+}
+.wp-scroll__bar:hover .wp-scroll__thumb,
+.wp-scroll__bar[data-scrolling] .wp-scroll__thumb {
+  background: rgba(255, 255, 255, 0.36);
+}
+
+/* dock tab overflow (Dockview-owned DOM): themed thin native scrollbar */
+.wp-dock .dv-tabs-container {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.22) transparent;
+}
+.wp-dock .dv-tabs-container::-webkit-scrollbar {
+  height: 6px;
+}
+.wp-dock .dv-tabs-container::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.22);
+  border-radius: 999px;
+}

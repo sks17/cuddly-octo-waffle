@@ -1,0 +1,391 @@
+/*
+ * Bespoke Ink "chrome" that isn't worth expressing as utilities — the ambient
+ * wallpaper, billboard hero + scrim, the mobile drawer, and the footer. These
+ * read from the shadcn tokens defined in globals.css.
+ *
+ * Reusable, composable pieces (Button, Card, Skeleton, Badge, islands, cards)
+ * are shadcn components + Tailwind utilities, not classes here.
+ */
+
+/* ── shell ─────────────────────────────────────────────────────────────── */
+.app-shell {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+.app-main {
+  position: relative;
+  z-index: 1;
+  flex: 1 0 auto;
+}
+.content {
+  width: var(--island-w);
+  max-width: var(--island-max);
+  margin: 0 auto;
+  padding: 20px 0 44px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* ── ambient wallpaper backdrop ────────────────────────────────────────── */
+.ambient {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  background: var(--wp-bg);
+}
+.ambient__wp {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+.ambient__tint {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    125% 80% at 50% 0%,
+    rgba(6, 6, 10, 0.32),
+    rgba(6, 6, 10, 0.72) 55%,
+    rgba(6, 6, 10, 0.88)
+  );
+}
+
+/* ── top bar ───────────────────────────────────────────────────────────── */
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  height: var(--topbar-h);
+  display: flex;
+  align-items: center;
+  transition: background 0.2s, border-color 0.2s;
+}
+.topbar--solid {
+  background: rgba(8, 8, 11, 0.72);
+  backdrop-filter: blur(12px) saturate(160%);
+  -webkit-backdrop-filter: blur(12px) saturate(160%);
+  border-bottom: 1px solid var(--border);
+}
+.topbar--transparent {
+  background: transparent;
+  border-bottom: 1px solid transparent;
+}
+.topbar__inner {
+  width: 100%;
+  max-width: var(--island-max);
+  margin: 0 auto;
+  padding: 0 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+.brand__mark {
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  background: linear-gradient(150deg, var(--brand-2), #7a5fe0 55%, #4b2bbf);
+  box-shadow: 0 0 14px rgba(122, 95, 224, 0.5);
+  flex: none;
+}
+.brand__name {
+  font-size: 15px;
+}
+.nav-desktop {
+  margin-left: auto;
+  display: flex;
+  gap: 4px;
+}
+.nav-link {
+  font-size: 13.5px;
+  color: var(--muted-foreground);
+  padding: 7px 12px;
+  border-radius: 8px;
+  transition: color 0.15s, background 0.15s;
+}
+.nav-link:hover {
+  color: var(--foreground);
+  background: rgba(255, 255, 255, 0.06);
+}
+.nav-link.active {
+  color: var(--foreground);
+  background: rgba(255, 255, 255, 0.08);
+}
+.menu-btn {
+  margin-left: auto;
+  display: none;
+  width: 40px;
+  height: 40px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--foreground);
+}
+.menu-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+@media (max-width: 767px) {
+  .nav-desktop {
+    display: none;
+  }
+  .menu-btn {
+    display: inline-flex;
+  }
+}
+
+/* ── mobile drawer ─────────────────────────────────────────────────────── */
+.drawer {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  visibility: hidden;
+}
+.drawer--open {
+  visibility: visible;
+}
+.drawer__backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+.drawer--open .drawer__backdrop {
+  opacity: 1;
+}
+.drawer__panel {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: min(82vw, 320px);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px;
+  background: #0c0c12;
+  border-left: 1px solid var(--border);
+  transform: translateX(100%);
+  transition: transform 0.24s ease;
+}
+.drawer--open .drawer__panel {
+  transform: translateX(0);
+}
+.drawer__head {
+  display: flex;
+  align-items: center;
+  height: calc(var(--topbar-h) - 12px);
+  margin-bottom: 6px;
+}
+.drawer__head .menu-btn {
+  display: inline-flex;
+  margin-left: auto;
+}
+.drawer__nav {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.drawer__link {
+  font-size: 16px;
+  color: var(--muted-foreground);
+  padding: 13px 12px;
+  border-radius: 10px;
+  transition: color 0.15s, background 0.15s;
+}
+.drawer__link:hover,
+.drawer__link.active {
+  color: var(--foreground);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+/* ── billboard hero ────────────────────────────────────────────────────── */
+.billboard {
+  position: relative;
+  margin-top: calc(-1 * var(--topbar-h));
+  min-height: 64vh;
+  overflow: hidden;
+  display: flex;
+  align-items: flex-end;
+}
+.billboard__wp {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+.bb-scrim {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to bottom,
+    rgba(5, 5, 6, 0.62) 0%,
+    rgba(5, 5, 6, 0.1) 24%,
+    rgba(5, 5, 6, 0.08) 42%,
+    rgba(5, 5, 6, 0.72) 78%,
+    var(--background) 100%
+  );
+}
+.bb-hero {
+  position: relative;
+  z-index: 2;
+  width: var(--island-w);
+  max-width: var(--island-max);
+  margin: 0 auto;
+  padding: 0 0 48px;
+}
+.eyebrow {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--brand);
+}
+.bb-title {
+  font-size: clamp(34px, 7vw, 64px);
+  font-weight: 750;
+  letter-spacing: -0.03em;
+  line-height: 1;
+  margin-top: 12px;
+}
+.bb-blurb {
+  margin-top: 14px;
+  font-size: 15px;
+  color: rgba(255, 255, 255, 0.8);
+  max-width: 52ch;
+}
+.bb-actions {
+  margin-top: 22px;
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+/* ── page header + breadcrumbs ─────────────────────────────────────────── */
+.page-header {
+  width: var(--island-w);
+  max-width: var(--island-max);
+  margin: 0 auto;
+  padding: 30px 0 6px;
+}
+.page-title {
+  margin-top: 12px;
+  font-size: clamp(26px, 4vw, 38px);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+.crumbs {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12.5px;
+  color: var(--muted-foreground);
+  flex-wrap: wrap;
+}
+.crumbs a:hover {
+  color: var(--foreground);
+}
+.crumbs .sep {
+  opacity: 0.5;
+}
+.crumbs .current {
+  color: var(--foreground);
+}
+
+/* ── footer ────────────────────────────────────────────────────────────── */
+.footer {
+  position: relative;
+  z-index: 1;
+  margin-top: 24px;
+  border-top: 1px solid var(--border);
+  background: rgba(8, 8, 11, 0.55);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+.footer__inner {
+  width: var(--island-w);
+  max-width: var(--island-max);
+  margin: 0 auto;
+  padding: 30px 0 20px;
+  display: grid;
+  gap: 22px;
+  grid-template-columns: 1.6fr 1fr 1fr 1fr;
+}
+.footer__brand p {
+  margin-top: 10px;
+  font-size: 12.5px;
+  color: var(--muted-foreground);
+  max-width: 30ch;
+}
+.footer h4 {
+  font-size: 12px;
+  color: var(--foreground);
+  margin-bottom: 10px;
+}
+.f-link {
+  display: block;
+  font-size: 12.5px;
+  color: var(--muted-foreground);
+  padding: 4px 0;
+  transition: color 0.15s;
+}
+.f-link:hover {
+  color: var(--foreground);
+}
+.footer__bar {
+  width: var(--island-w);
+  max-width: var(--island-max);
+  margin: 0 auto;
+  padding: 14px 0 26px;
+  border-top: 1px solid var(--border-soft);
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  align-items: center;
+  font-size: 12px;
+  color: var(--dim);
+}
+.footer__bar .spacer {
+  flex: 1;
+}
+@media (max-width: 767px) {
+  .footer__inner {
+    grid-template-columns: 1fr 1fr;
+  }
+  .footer__brand {
+    grid-column: 1 / -1;
+  }
+}
+
+/* ── misc ──────────────────────────────────────────────────────────────── */
+.prose p {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.82);
+  margin-bottom: 12px;
+  max-width: 68ch;
+}
+.notfound {
+  text-align: center;
+  padding: 60px 0;
+}
+.notfound h1 {
+  font-size: clamp(40px, 10vw, 80px);
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  background: linear-gradient(150deg, var(--brand-2), #7a5fe0, #4b2bbf);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}

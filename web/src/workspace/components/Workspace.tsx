@@ -1,5 +1,5 @@
 import { useLayoutEffect, useMemo, useRef, type CSSProperties } from 'react';
-import { Minimize2, X } from 'lucide-react';
+import { Minimize2, PanelLeft, X } from 'lucide-react';
 import { useWorkspaceStore } from '../store';
 import { workspace } from '../controller';
 import { getScrollFocus, setRootEl, setScrollFocus, setTabStripEl, setWorkspaceEl } from '../refs';
@@ -13,6 +13,7 @@ import { CommandLine } from '../debug/CommandLine';
 import { ExplorerSidebar } from '../content/ExplorerSidebar';
 import { Splitter } from './Splitter';
 import { useShellStore } from '../shell/store';
+import { shell } from '../shell/controller';
 import { installScrollHandoff } from '../scrollHandoff';
 
 function MaximizedWindow({ panelId }: { panelId: string }) {
@@ -37,6 +38,37 @@ function MaximizedWindow({ panelId }: { panelId: string }) {
   );
 }
 
+/**
+ * Narrow viewports can't afford a permanent explorer column, so it becomes a
+ * drawer: this is its handle and its scrim. Both are display:none above the
+ * breakpoint, where the sidebar is simply always there.
+ */
+function ExplorerDrawerControls({ open }: { open: boolean }) {
+  return (
+    <>
+      <button
+        type="button"
+        className="wp-side-toggle"
+        aria-expanded={open}
+        aria-label={open ? 'Hide files' : 'Show files'}
+        onClick={() => shell.setExplorerOpen(!open)}
+      >
+        <PanelLeft size={14} />
+        <span>Files</span>
+      </button>
+      {open && (
+        <button
+          type="button"
+          className="wp-side-scrim"
+          tabIndex={-1}
+          aria-label="Close files"
+          onClick={() => shell.setExplorerOpen(false)}
+        />
+      )}
+    </>
+  );
+}
+
 interface WorkspaceProps {
   /** 'debug' = the standalone /workspace (console + scratch panels); 'content' = the homepage. */
   variant?: WorkspaceVariant;
@@ -51,6 +83,7 @@ export function Workspace({ variant = 'debug', onReady }: WorkspaceProps) {
   const panels = useWorkspaceStore((s) => s.panels);
   const maximizedId = useWorkspaceStore((s) => s.maximizedId);
   const explorerWidth = useShellStore((s) => s.explorer.width);
+  const explorerOpen = useShellStore((s) => s.explorerOpen);
   const content = variant === 'content';
 
   const floatingIds = useMemo(
@@ -129,10 +162,17 @@ export function Workspace({ variant = 'debug', onReady }: WorkspaceProps) {
   const style = content ? ({ '--wp-explorer-w': `${explorerWidth}px` } as CSSProperties) : undefined;
 
   return (
-    <section className={className} style={style} aria-label="Workspace" ref={rootRef}>
+    <section
+      className={className}
+      style={style}
+      aria-label="Workspace"
+      ref={rootRef}
+      data-explorer={content ? (explorerOpen ? 'open' : 'closed') : undefined}
+    >
       <WorkspaceBackground />
       {content && <ExplorerSidebar />}
       {content && <Splitter />}
+      {content && <ExplorerDrawerControls open={explorerOpen} />}
       <div className="wp-main">
         <DockLayer variant={variant} onReady={onReady} />
         {/* Explicit tab-dock geometry: always present (docking works with 0 tabs),

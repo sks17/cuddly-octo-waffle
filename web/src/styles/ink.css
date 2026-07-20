@@ -302,6 +302,27 @@
   flex-wrap: wrap;
 }
 
+@media (max-width: 767px) {
+  /* The hero is pulled up under the sticky bar; on a phone the copy is tall
+     enough to reach it, so it needs to clear the bar explicitly. */
+  .billboard {
+    min-height: auto;
+  }
+  .bb-hero {
+    padding: calc(var(--topbar-h) + 18px) 0 36px;
+  }
+  .bb-title {
+    margin-top: 8px;
+  }
+  .bb-blurb {
+    padding: 14px 16px 15px 18px;
+  }
+  .bb-actions > * {
+    flex: 1 1 auto;
+    justify-content: center;
+  }
+}
+
 /* ── homepage workspace ────────────────────────────────────────────────── */
 .home-workspace {
   position: relative;

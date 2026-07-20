@@ -1,5 +1,7 @@
+import { FileText } from 'lucide-react';
 import { useWorkspaceStore } from '../store';
 import { shell } from '../shell/controller';
+import { useNarrow } from '../useNarrow';
 import { useDocMarkdown, useDocument } from '@/core/atlas/hooks';
 import { atlas } from '@/core/atlas/client';
 import { previewFileFor } from '@/core/atlas/meta';
@@ -14,13 +16,28 @@ export function DocView({ panelId }: { panelId: string }) {
   const layout = useWorkspaceStore((s) => (s.panels[panelId]?.data?.layout as WorkspaceLayout) ?? 'standard');
   const { data: doc } = useDocument(docId);
   const { data: md, loading, error } = useDocMarkdown(docId);
+  const narrow = useNarrow();
 
   if (!docId) return <div className="wp-reader wp-reader--empty">Select a document from the Explorer.</div>;
   if (error) return <div className="wp-reader wp-reader--empty">Couldn't load this document.</div>;
 
   if (doc?.type === 'pdf') {
     // The manifest owns the body URL, so this works against both the live mock and the baked Atlas.
-    return <iframe className="wp-pdf" title={doc.title} src={atlas.abs(doc.contentUrl)} />;
+    const href = atlas.abs(doc.contentUrl);
+    // Mobile browsers don't render PDFs in an iframe — offer the cover and a way out.
+    if (narrow) {
+      return (
+        <div className="wp-pdf-card">
+          <img className="wp-pdf-card__cover" src={atlas.abs(doc.thumbnailUrl)} alt="" />
+          {doc.description && <p className="wp-doc__lede">{doc.description}</p>}
+          <a className="wp-pdf-card__open" href={href} target="_blank" rel="noreferrer">
+            <FileText size={14} />
+            Open the PDF
+          </a>
+        </div>
+      );
+    }
+    return <iframe className="wp-pdf" title={doc.title} src={href} />;
   }
 
   const body = loading ? (

@@ -51,6 +51,8 @@ export interface ShellState {
   layout: WorkspaceLayout; // meaningful only when expanded
   destination: WorkspaceDestination | null; // null ⇒ centered/idle
   explorer: ExplorerState;
+  /** Narrow viewports only: the explorer rides over the content as a drawer. */
+  explorerOpen: boolean;
   contentScrollTop: number;
   transitioning: boolean; // true during the frame animation
   selectedDoc: { id: string; title: string } | null; // chat context source of truth

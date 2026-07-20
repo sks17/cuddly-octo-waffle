@@ -233,11 +233,11 @@ export const documents: Document[] = [
   {
     id: 'doc-experience-uw', type: 'markdown', title: 'University of Washington — Allen School',
     description: 'BSc Computer Science with minors in Mathematics and Data Science, expected 2028.',
-    thumbnailUrl: thumb('doc-experience-uw'),
+    thumbnailUrl: thumbFile('doc-experience-uw.jpg'),
     tags: ['experience', 'study'], links: [],
     path: 'experiences', collectionIds: ['experiences'], contentUrl: content('doc-experience-uw'),
     associated: [], createdAt: '2024-09-01T00:00:00.000Z', updatedAt: now,
-    meta: { org: 'University of Washington', period: 'Expected 2028' },
+    meta: { org: 'University of Washington', period: 'Expected 2028', layout: 'preview-left' },
   },
 ];
 

@@ -11,6 +11,7 @@ export const useShellStore = create<ShellState>()(() => ({
   layout: 'standard',
   destination: null,
   explorer: { openFolders: {}, selectedFileId: null, width: DEFAULT_EXPLORER_W, scrollTop: 0 },
+  explorerOpen: false,
   contentScrollTop: 0,
   transitioning: false,
   selectedDoc: null,

@@ -735,6 +735,9 @@
   display: flex;
   flex-direction: column;
   min-height: 0;
+  /* Without this the tree's longest document title becomes the sidebar's minimum
+     width, and it eats the whole frame — the content pane collapses to nothing. */
+  min-width: 0;
   background: color-mix(in srgb, var(--surface) 88%, transparent);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
@@ -1069,11 +1072,18 @@ h6.md-h {
     box-shadow 0.42s ease;
 }
 .wp-shell[data-presentation='centered'] .wp-shell__frame {
+  /* Centered, it is an island like every other one — same gutter, same measure. */
+  width: var(--island-w);
   max-width: var(--island-max);
   height: clamp(360px, 54vh, 580px);
   border: 1px solid var(--border);
   border-radius: 14px;
   box-shadow: 0 22px 60px -30px var(--panel-shadow);
+}
+/* Breathing room between the island above it and the footer below. */
+.wp-shell[data-presentation='centered'] {
+  display: block;
+  padding: 14px 0 52px;
 }
 .wp-shell[data-presentation='expanded'] .wp-shell__frame {
   max-width: 100vw;
@@ -1166,12 +1176,44 @@ h6.md-h {
   .wp-doc--preview {
     grid-template-columns: 1fr;
   }
+  /* Stacked, a sticky preview would sit on top of the text it belongs to. */
+  .wp-doc__preview {
+    position: static;
+  }
 }
 .wp-pdf {
   width: 100%;
   height: 100%;
   border: 0;
   background: var(--surface);
+}
+/* Phone stand-in for the embedded PDF: its cover, the lede, and a way to read it. */
+.wp-pdf-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.wp-pdf-card__cover {
+  display: block;
+  width: 100%;
+  height: auto;
+  border: 1px solid var(--border-soft);
+  border-radius: 10px;
+  background: var(--surface);
+}
+.wp-pdf-card__open {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  align-self: flex-start;
+  min-height: 40px;
+  padding: 0 16px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--accent-foreground);
+  font-size: 13px;
+  font-weight: 600;
 }
 .wp-folder {
   display: flex;
@@ -1209,9 +1251,83 @@ h6.md-h {
   text-decoration: underline;
 }
 
+/* ── explorer drawer (narrow viewports) ───────────────────────────────── */
+/* Above the breakpoint the sidebar is a column and these controls don't exist. */
+.wp-side-toggle,
+.wp-side-scrim {
+  display: none;
+}
+
 @media (max-width: 767px) {
+  /* The sidebar leaves the flex row and rides over the content instead, so the
+     document pane gets the full frame width at phone sizes. */
   .wp-root--content .wp-side {
-    flex-basis: 188px;
+    position: absolute;
+    inset: 0 auto 0 0;
+    z-index: 7;
+    flex-basis: auto;
+    width: min(80vw, 300px);
+    transform: translateX(-101%);
+    transition: transform 0.26s cubic-bezier(0.22, 0.61, 0.36, 1);
+    box-shadow: 12px 0 34px -22px var(--panel-shadow);
+    background: var(--surface);
+  }
+  .wp-root--content[data-explorer='open'] .wp-side {
+    transform: none;
+  }
+  .wp-splitter {
+    display: none;
+  }
+
+  .wp-side-toggle {
+    position: absolute;
+    z-index: 8;
+    left: 10px;
+    bottom: 10px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 34px;
+    padding: 0 12px;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--surface) 92%, transparent);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    box-shadow: 0 10px 26px -16px var(--panel-shadow);
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--foreground);
+  }
+  .wp-side-toggle[aria-expanded='true'] {
+    border-color: rgba(var(--accent-rgb), 0.55);
+    color: var(--brand);
+  }
+  .wp-side-scrim {
+    position: absolute;
+    inset: 0;
+    z-index: 6;
+    display: block;
+    border: 0;
+    padding: 0;
+    background: color-mix(in srgb, var(--background) 55%, transparent);
+  }
+  /* The handle floats over the drawer too — keep the last rows reachable. */
+  .wp-side__tree {
+    padding-bottom: 56px;
+  }
+  .wp-leaf,
+  .wp-node__row {
+    min-height: 34px;
+  }
+
+  /* Tighter gutters, and room under the content so the Files handle never
+     covers the last row. */
+  .wp-body--bare .wp-body__content .wp-scroll__viewport {
+    padding: 14px 14px 58px;
+  }
+  .wp-sec__row {
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
   }
 }
 

@@ -94,6 +94,8 @@ export const shell = {
       presentation: 'expanded',
       layout: layoutFor(dest),
       explorer: reveal(s.explorer, dest),
+      // Picking something is the end of browsing: let the mobile drawer fall shut.
+      explorerOpen: false,
       selectedDoc: docContext(dest) ?? s.selectedDoc,
     });
     beginTransition();
@@ -113,6 +115,11 @@ export const shell = {
     beginTransition();
     workspace.showFeatured();
     schedulePersist();
+  },
+
+  /** Open/close the explorer drawer (only visible on narrow viewports). */
+  setExplorerOpen(open: boolean): void {
+    store.setState({ explorerOpen: open });
   },
 
   selectFile(fileId: string): void {

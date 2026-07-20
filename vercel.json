@@ -1,5 +1,8 @@
 {
-  "buildCommand": "npm run build",
-  "installCommand": "npm install",
-  "framework": "astro"
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "installCommand": "npm install --prefix mock-api && npm install --prefix web",
+  "buildCommand": "npm run snapshot --prefix mock-api && npm run build --prefix web",
+  "outputDirectory": "web/dist",
+  "framework": null,
+  "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]
 }

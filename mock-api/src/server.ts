@@ -3,38 +3,7 @@
  * the frontend's adapters can point at http://localhost:8787 in development.
  */
 import { serve } from '@hono/node-server';
-import { Hono } from 'hono';
-import { cors } from 'hono/cors';
-
-import atlas from './routes/atlas.js';
-import wallpaper from './routes/wallpaper.js';
-import chat from './routes/chat.js';
-import graph from './routes/graph.js';
-import search from './routes/search.js';
-
-const app = new Hono();
-app.use('*', cors());
-
-app.get('/health', (c) => c.json({ ok: true }));
-
-app.get('/', (c) =>
-  c.json({
-    name: 'far-flare mock API',
-    endpoints: {
-      atlas: ['/atlas/manifest', '/atlas/documents', '/atlas/documents/:id', '/atlas/documents/:id/content', '/atlas/collections', '/atlas/thumbnails/:id.svg', '/atlas/assets/:docId/:name'],
-      wallpaper: ['/wallpaper/manifest', '/wallpaper/rotate?variant=dark|light', '/wallpaper/:id.svg', '/wallpaper/:id/spec'],
-      chat: ['POST /chat  (SSE stream)'],
-      graph: ['/graph', '/graph/neighbors/:id', '/graph/breadcrumbs/:id', '/graph/context?q='],
-      search: ['/search?q=&mode=basic|rich'],
-    },
-  }),
-);
-
-app.route('/atlas', atlas);
-app.route('/wallpaper', wallpaper);
-app.route('/chat', chat);
-app.route('/graph', graph);
-app.route('/search', search);
+import app from './app.js';
 
 const port = Number(process.env.PORT ?? 8787);
 serve({ fetch: app.fetch, port }, (info) => {

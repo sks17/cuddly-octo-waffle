@@ -19,7 +19,8 @@ export function DocView({ panelId }: { panelId: string }) {
   if (error) return <div className="wp-reader wp-reader--empty">Couldn't load this document.</div>;
 
   if (doc?.type === 'pdf') {
-    return <iframe className="wp-pdf" title={doc.title} src={atlas.contentUrl(doc.id)} />;
+    // The manifest owns the body URL, so this works against both the live mock and the baked Atlas.
+    return <iframe className="wp-pdf" title={doc.title} src={atlas.abs(doc.contentUrl)} />;
   }
 
   const body = loading ? (

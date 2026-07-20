@@ -54,6 +54,8 @@ export interface Collection {
   title: string;
   description?: string;
   documentIds: string[];
+  /** Markdown closing note, rendered under the collection's items. */
+  note?: string;
 }
 
 export interface AtlasManifest {

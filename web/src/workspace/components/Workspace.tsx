@@ -1,15 +1,19 @@
-import { useLayoutEffect, useMemo, useRef } from 'react';
+import { useLayoutEffect, useMemo, useRef, type CSSProperties } from 'react';
 import { Minimize2, X } from 'lucide-react';
 import { useWorkspaceStore } from '../store';
 import { workspace } from '../controller';
-import { getScrollFocus, setRootEl, setScrollFocus, setWorkspaceEl } from '../refs';
-import { isFloatingLike } from '../types';
+import { getScrollFocus, setRootEl, setScrollFocus, setTabStripEl, setWorkspaceEl } from '../refs';
+import { isFloatingLike, type WorkspaceVariant } from '../types';
 import { WorkspaceBackground } from './WorkspaceBackground';
 import { DockLayer } from './DockLayer';
 import { FloatingWindow } from './FloatingWindow';
 import { SnapPreview, TabDockHighlight } from './SnapPreview';
 import { PanelBody } from './PanelBody';
-import { CommandLine } from './CommandLine';
+import { CommandLine } from '../debug/CommandLine';
+import { ExplorerSidebar } from '../content/ExplorerSidebar';
+import { Splitter } from './Splitter';
+import { useShellStore } from '../shell/store';
+import { installScrollHandoff } from '../scrollHandoff';
 
 function MaximizedWindow({ panelId }: { panelId: string }) {
   const p = useWorkspaceStore((s) => s.panels[panelId]);
@@ -33,11 +37,21 @@ function MaximizedWindow({ panelId }: { panelId: string }) {
   );
 }
 
-export function Workspace() {
+interface WorkspaceProps {
+  /** 'debug' = the standalone /workspace (console + scratch panels); 'content' = the homepage. */
+  variant?: WorkspaceVariant;
+  /** Fired after Dockview binds — the shell uses it to (re)mount the active destination. */
+  onReady?: () => void;
+}
+
+export function Workspace({ variant = 'debug', onReady }: WorkspaceProps) {
   const rootRef = useRef<HTMLElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
+  const tabStripRef = useRef<HTMLDivElement>(null);
   const panels = useWorkspaceStore((s) => s.panels);
   const maximizedId = useWorkspaceStore((s) => s.maximizedId);
+  const explorerWidth = useShellStore((s) => s.explorer.width);
+  const content = variant === 'content';
 
   const floatingIds = useMemo(
     () => Object.values(panels).filter((p) => isFloatingLike(p.mode) && p.id !== maximizedId).map((p) => p.id),
@@ -50,6 +64,7 @@ export function Workspace() {
     setRootEl(root);
     if (!el || !root) return;
     setWorkspaceEl(el);
+    setTabStripEl(tabStripRef.current);
 
     const update = () => {
       const r = el.getBoundingClientRect();
@@ -70,7 +85,8 @@ export function Workspace() {
       const panelEl = t.closest<HTMLElement>('[data-panel-id]');
       if (panelEl?.dataset.panelId) setScrollFocus({ kind: 'panel', id: panelEl.dataset.panelId });
     };
-    const onWheel = (e: WheelEvent) => {
+    // Debug workspace: wheel is redirected to the last-clicked panel's viewport.
+    const onWheelDebug = (e: WheelEvent) => {
       const focus = getScrollFocus();
       if (!focus) return;
       const viewport =
@@ -82,37 +98,56 @@ export function Workspace() {
       const maxLeft = viewport.scrollWidth - viewport.clientWidth;
       const canV = (e.deltaY < 0 && viewport.scrollTop > 0) || (e.deltaY > 0 && viewport.scrollTop < maxTop - 0.5);
       const canH = (e.deltaX < 0 && viewport.scrollLeft > 0) || (e.deltaX > 0 && viewport.scrollLeft < maxLeft - 0.5);
-      if (!canV && !canH) return; // at boundary → let the event chain (e.g. back to the intro)
+      if (!canV && !canH) return; // at boundary → let the event chain (e.g. back to the page)
       if (canV) viewport.scrollTop += e.deltaY;
       if (canH) viewport.scrollLeft += e.deltaX;
       e.preventDefault();
     };
     root.addEventListener('pointerdown', onDown, true);
-    root.addEventListener('wheel', onWheel, { capture: true, passive: false });
+
+    // Content workspace: intent-based scroll handoff to the page (§ scroll handoff).
+    let removeScroll: () => void;
+    if (content) {
+      removeScroll = installScrollHandoff(root);
+    } else {
+      root.addEventListener('wheel', onWheelDebug, { capture: true, passive: false });
+      removeScroll = () => root.removeEventListener('wheel', onWheelDebug, true);
+    }
 
     return () => {
       ro.disconnect();
       root.removeEventListener('pointerdown', onDown, true);
-      root.removeEventListener('wheel', onWheel, true);
+      removeScroll();
       setWorkspaceEl(null);
       setRootEl(null);
+      setTabStripEl(null);
       setScrollFocus(null);
     };
-  }, []);
+  }, [content]);
+
+  const className = `wp-root${content ? ' wp-root--content' : ''}`;
+  const style = content ? ({ '--wp-explorer-w': `${explorerWidth}px` } as CSSProperties) : undefined;
 
   return (
-    <section className="wp-root" aria-label="Workspace" ref={rootRef}>
+    <section className={className} style={style} aria-label="Workspace" ref={rootRef}>
       <WorkspaceBackground />
-      <DockLayer />
-      <TabDockHighlight />
-      <div className="wp-stage" ref={stageRef}>
-        {floatingIds.map((id) => (
-          <FloatingWindow key={id} panelId={id} />
-        ))}
-        <SnapPreview />
+      {content && <ExplorerSidebar />}
+      {content && <Splitter />}
+      <div className="wp-main">
+        <DockLayer variant={variant} onReady={onReady} />
+        {/* Explicit tab-dock geometry: always present (docking works with 0 tabs),
+            and only THIS strip qualifies as a dock target — never a document body. */}
+        <div className="wp-tabstrip-ref" data-tabdock aria-hidden="true" ref={tabStripRef} />
+        <TabDockHighlight />
+        <div className="wp-stage" ref={stageRef}>
+          {floatingIds.map((id) => (
+            <FloatingWindow key={id} panelId={id} />
+          ))}
+          <SnapPreview />
+        </div>
       </div>
       {maximizedId && <MaximizedWindow panelId={maximizedId} />}
-      <CommandLine />
+      {!content && <CommandLine />}
     </section>
   );
 }

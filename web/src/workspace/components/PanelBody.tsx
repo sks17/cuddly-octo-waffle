@@ -1,5 +1,6 @@
 import { useWorkspaceStore } from '../store';
 import { workspace } from '../controller';
+import { getChrome } from '../refs';
 import { PanelTypeContent } from '../panels';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
@@ -7,8 +8,19 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 export function PanelBody({ panelId }: { panelId: string }) {
   const p = useWorkspaceStore((s) => s.panels[panelId]);
   if (!p) return null;
-  const maxed = p.mode === 'maximized';
 
+  // Content workspace (homepage): borderless — no id/mode meta, no actions row.
+  if (getChrome() === 'content') {
+    return (
+      <div className="wp-body wp-body--bare">
+        <ScrollArea className="wp-body__content">
+          <PanelTypeContent panelId={panelId} />
+        </ScrollArea>
+      </div>
+    );
+  }
+
+  const maxed = p.mode === 'maximized';
   return (
     <div className="wp-body">
       <div className="wp-body__meta">

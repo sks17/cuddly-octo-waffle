@@ -2,8 +2,10 @@
 @import "./ink.css";
 
 /*
- * Ink theme in the shadcn token system (dark-only for now — theme switching for
- * the 50 palettes layers on later by overriding these vars on a [data-theme]).
+ * Theme token system. The ThemeProvider (src/theme) writes the 13 CANONICAL
+ * vars on :root per theme; every other token below is a static alias of one of
+ * those, so overriding the canonical vars re-themes utilities AND bespoke CSS.
+ * `@theme inline` makes Tailwind emit utilities that reference the vars directly.
  */
 @theme inline {
   --color-background: var(--background);
@@ -18,17 +20,21 @@
   --color-secondary-foreground: var(--secondary-foreground);
   --color-muted: var(--muted);
   --color-muted-foreground: var(--muted-foreground);
-  --color-accent: var(--accent);
-  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--surface-hover); /* shadcn hover stays SUBTLE, not the vivid accent */
+  --color-accent-foreground: var(--foreground);
   --color-destructive: var(--destructive);
   --color-destructive-foreground: var(--destructive-foreground);
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
 
-  /* Ink-specific (not part of shadcn): brand + wallpaper */
-  --color-brand: var(--brand);
+  /* Semantic surfaces + vivid brand — used by all new components. */
+  --color-brand: var(--accent);
   --color-brand-2: var(--brand-2);
+  --color-surface: var(--surface);
+  --color-surface-elevated: var(--surface-elevated);
+  --color-taskbar: var(--taskbar-background);
+  --color-selection: var(--selection);
 
   --radius-sm: calc(var(--radius) - 2px);
   --radius-md: var(--radius);
@@ -40,37 +46,51 @@
 }
 
 :root {
+  /* ── Canonical semantic tokens — seeded with the default (ink) theme.
+        The ThemeProvider overrides these 13 at runtime. ─────────────────── */
   --background: #08080b;
+  --surface: #16161a;
+  --surface-elevated: #212127;
   --foreground: #fafafa;
-  --card: #0a0a0f;
-  --card-foreground: #fafafa;
-  --popover: #0e0e14;
-  --popover-foreground: #fafafa;
-  --primary: #fafafa;
-  --primary-foreground: #18181b;
-  --secondary: #17171c;
-  --secondary-foreground: #fafafa;
-  --muted: #14141a;
   --muted-foreground: #9aa0ac;
-  --accent: #1b1b22;
-  --accent-foreground: #fafafa;
+  --border: #2b2c31;
+  --accent: #8b8cf7;
+  --accent-rgb: 139, 140, 247;
+  --accent-foreground: #0b0b0b;
+  --selection: rgba(139, 140, 247, 0.3);
+  --scrollbar-track: transparent;
+  --scrollbar-thumb: rgba(154, 160, 172, 0.42);
+  --taskbar-background: rgba(8, 8, 11, 0.72);
+  --panel-shadow: rgba(0, 0, 0, 0.7);
+
+  /* ── Derived aliases — reference the canonical vars so all of it re-themes. ─ */
+  --brand: var(--accent);
+  --brand-2: color-mix(in srgb, var(--accent) 70%, var(--foreground));
+  --ring: var(--accent);
+  --primary: var(--accent);
+  --primary-foreground: var(--accent-foreground);
+  --card: var(--surface);
+  --card-foreground: var(--foreground);
+  --popover: var(--surface-elevated);
+  --popover-foreground: var(--foreground);
+  --secondary: var(--surface-elevated);
+  --secondary-foreground: var(--foreground);
+  --muted: var(--surface);
+  --surface-hover: color-mix(in srgb, var(--foreground) 8%, transparent);
+  --input: var(--border);
+  --border-soft: color-mix(in srgb, var(--border) 55%, transparent);
+  --dim: var(--muted-foreground);
   --destructive: #ef4444;
   --destructive-foreground: #fafafa;
-  --border: rgba(255, 255, 255, 0.1);
-  --input: rgba(255, 255, 255, 0.14);
-  --ring: #8b8cf7;
-  --radius: 0.5rem;
+  --wp-bg: var(--background);
+  --wp-accent: var(--accent);
 
-  /* Ink extras */
-  --brand: #8b8cf7;
-  --brand-2: #c561f6;
-  --dim: #6f7079;
-  --border-soft: rgba(255, 255, 255, 0.055);
-  --topbar-h: 60px;
+  /* ── Layout tokens (non-color). ────────────────────────────────────────── */
+  --radius: 0.5rem;
+  --taskbar-h: 60px;
+  --topbar-h: var(--taskbar-h);
   --island-w: 92%;
   --island-max: 1120px;
-  --wp-bg: #0b0b12;
-  --wp-accent: #6d5cff;
 }
 
 @layer base {
@@ -85,12 +105,17 @@
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
   }
-  html {
-    scroll-behavior: smooth;
-  }
   a {
     color: inherit;
     text-decoration: none;
+  }
+  /* No global smooth scroll: it strands programmatic pins (e.g. the workspace
+     expand) behind an in-flight smooth animation. Smooth is opted into per call. */
+  html {
+    scroll-behavior: auto;
+  }
+  ::selection {
+    background: var(--selection);
   }
   :focus-visible {
     outline: 2px solid var(--ring);

@@ -6,7 +6,7 @@ export interface CommandResult {
   lines: string[];
 }
 
-const SNAP_REGIONS: SnapRegion[] = ['left', 'right', 'bottom-left', 'bottom-right'];
+const SNAP_REGIONS: SnapRegion[] = ['left', 'right', 'top-left', 'top-right', 'bottom-left', 'bottom-right'];
 
 const HELP: [string, string][] = [
   ['help', 'List all commands.'],
@@ -15,7 +15,7 @@ const HELP: [string, string][] = [
   ['focus <id>', 'Bring a panel to the front and mark it active.'],
   ['float <id>', 'Convert a tabbed/snapped panel into a floating panel.'],
   ['tab <id>', 'Move a panel into the top tab bar.'],
-  ['snap <id> <left|right|bottom-left|bottom-right>', 'Snap a panel to a region.'],
+  ['snap <id> <left|right|top-left|top-right|bottom-left|bottom-right>', 'Snap a panel to a region.'],
   ['maximize <id>', 'Maximize a panel to fill the workspace.'],
   ['restore <id>', 'Restore a panel from maximized/snapped mode.'],
   ['move <id> <x> <y>', 'Move a floating panel to workspace coordinates.'],
@@ -60,7 +60,7 @@ export function runCommand(input: string): CommandResult {
         return needId(args[0], (id) => (workspace.tabPanel(id), ok(`${id} → tabbed`)));
 
       case 'snap': {
-        if (!args[0]) return err('usage: snap <id> <left|right|bottom-left|bottom-right>');
+        if (!args[0]) return err('usage: snap <id> <left|right|top-left|top-right|bottom-left|bottom-right>');
         const region = args[1];
         if (!region || !SNAP_REGIONS.includes(region as SnapRegion))
           return err(`unsupported snap location — try: ${SNAP_REGIONS.join(', ')}`);

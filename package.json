@@ -10,6 +10,10 @@
   },
   "dependencies": {
     "@astrojs/vercel": "^9.0.2",
+    "@base-ui/react": "^1.6.0",
     "astro": "^5.16.5"
+  },
+  "devDependencies": {
+    "shadcn": "^4.13.0"
   }
 }

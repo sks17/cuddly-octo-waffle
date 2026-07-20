@@ -10,6 +10,7 @@ interface Line {
 /**
  * Persistent frontend command line — always mounted (survives panel focus/mode
  * changes), with history (↑/↓), validation, error messages and a `help` command.
+ * Debug-only: the content workspace does not mount this (see [[Workspace]]).
  */
 export function CommandLine() {
   const [log, setLog] = useState<Line[]>([{ kind: 'ok', text: 'workspace console — type "help" for commands' }]);

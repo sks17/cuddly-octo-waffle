@@ -9,6 +9,7 @@ import {
 import 'dockview-react/dist/styles/dockview.css';
 import { setDockApi } from '../refs';
 import { workspace } from '../controller';
+import type { WorkspaceVariant } from '../types';
 import { startPanelDrag } from '../drag';
 import { useWorkspaceStore } from '../store';
 import { PanelBody } from './PanelBody';
@@ -73,10 +74,11 @@ const components = {
  * are disabled; the `workspace` controller + `startPanelDrag` own all movement,
  * so tab drag-out and drag-in are custom and precise.
  */
-export function DockLayer() {
-  const onReady = (event: DockviewReadyEvent) => {
+export function DockLayer({ variant = 'debug', onReady }: { variant?: WorkspaceVariant; onReady?: () => void }) {
+  const handleReady = (event: DockviewReadyEvent) => {
     setDockApi(event.api);
-    workspace.bind(event.api);
+    workspace.bind(event.api, variant);
+    onReady?.();
   };
 
   return (
@@ -87,7 +89,7 @@ export function DockLayer() {
       disableFloatingGroups
       components={components}
       defaultTabComponent={CustomTab}
-      onReady={onReady}
+      onReady={handleReady}
     />
   );
 }

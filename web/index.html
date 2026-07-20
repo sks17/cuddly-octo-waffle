@@ -2,9 +2,26 @@
 <html lang="en" data-theme="ink">
   <head>
     <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content="Saksham Singh — quant, data, and the mathematics of moving pictures." />
     <title>Saksham Singh</title>
+    <script>
+      // Replay the persisted theme's pre-resolved vars before first paint (no FOUC).
+      (function () {
+        try {
+          var raw = localStorage.getItem('far-flare:theme:v1');
+          var d = document.documentElement;
+          if (raw) {
+            var s = JSON.parse(raw);
+            if (s && s.version === 1 && s.vars) {
+              for (var k in s.vars) d.style.setProperty(k, s.vars[k]);
+              if (s.id) d.dataset.theme = s.id;
+            }
+          }
+        } catch (e) {}
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

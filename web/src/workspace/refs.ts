@@ -27,6 +27,18 @@ export const setRootEl = (el: HTMLElement | null): void => {
 export const getRootEl = (): HTMLElement | null => rootEl;
 
 /**
+ * An explicit, always-present overlay spanning the tab strip. Used as the
+ * tab-dock hit-test geometry (client coords) so docking is precise, works with
+ * zero tabs, and — crucially — a document/panel BODY never qualifies as a tab
+ * target (only this strip does).
+ */
+let tabStripEl: HTMLElement | null = null;
+export const setTabStripEl = (el: HTMLElement | null): void => {
+  tabStripEl = el;
+};
+export const getTabStripEl = (): HTMLElement | null => tabStripEl;
+
+/**
  * The most recently *clicked* scroll region — wheel scrolling is directed here
  * (focus-follows-click, not hover). Null until the user clicks a panel/CLI.
  */
@@ -36,3 +48,10 @@ export const setScrollFocus = (f: ScrollFocus): void => {
   scrollFocus = f;
 };
 export const getScrollFocus = (): ScrollFocus => scrollFocus;
+
+/** Chrome level for panels: 'debug' shows the id/mode meta + actions; 'content' is borderless. */
+let chrome: 'debug' | 'content' = 'debug';
+export const setChrome = (c: 'debug' | 'content'): void => {
+  chrome = c;
+};
+export const getChrome = (): 'debug' | 'content' => chrome;

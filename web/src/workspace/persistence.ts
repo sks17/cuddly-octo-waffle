@@ -15,6 +15,7 @@ export interface PersistedLayout {
 
 const VALID_MODES = new Set([
   'tabbed', 'floating', 'snapped-left', 'snapped-right',
+  'snapped-top-left', 'snapped-top-right',
   'snapped-bottom-left', 'snapped-bottom-right', 'maximized',
 ]);
 

@@ -5,9 +5,10 @@ export interface NavItem {
 }
 
 export const NAV: NavItem[] = [
-  { to: '/work', label: 'Work' },
-  { to: '/writing', label: 'Writing' },
   { to: '/projects', label: 'Projects' },
-  { to: '/about', label: 'About' },
-  { to: '/workspace', label: 'Workspace' },
+  { to: '/experiences', label: 'Experiences' },
+  { to: '/links', label: 'Links' },
+  { to: '/drafts', label: 'Drafts' },
+  { to: '/blogs', label: 'Blogs' },
+  { to: '/contact', label: 'Contact' },
 ];

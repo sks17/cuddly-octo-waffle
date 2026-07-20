@@ -6,11 +6,14 @@ import {
   isSnapped,
   type PanelMode,
   type PanelType,
+  type Rect,
   type SnapRegion,
   type WorkspacePanelState,
+  type WorkspaceVariant,
 } from './types';
 import { useWorkspaceStore } from './store';
-import { getDockApi } from './refs';
+import { getDockApi, setChrome } from './refs';
+import type { WorkspaceDestination } from './shell/types';
 import { snapRect } from './snap';
 import { loadLayout, saveLayout, type PersistedLayout } from './persistence';
 
@@ -25,6 +28,11 @@ const TITLES: Record<PanelType, string> = {
   preview: 'Preview',
   terminal: 'Terminal',
   settings: 'Settings',
+  featured: 'Featured',
+  reader: 'Reader',
+  folder: 'Folder',
+  compiled: 'Page',
+  page: 'Page',
 };
 
 const DEFAULT_SIZE: Record<PanelType, { width: number; height: number }> = {
@@ -33,12 +41,19 @@ const DEFAULT_SIZE: Record<PanelType, { width: number; height: number }> = {
   preview: { width: 540, height: 380 },
   terminal: { width: 580, height: 300 },
   settings: { width: 440, height: 360 },
+  featured: { width: 640, height: 440 },
+  reader: { width: 620, height: 460 },
+  folder: { width: 640, height: 460 },
+  compiled: { width: 620, height: 460 },
+  page: { width: 560, height: 420 },
 };
 
 const DOCK_COMPONENT = 'workspacePanel';
 
 let idCounter = 0;
 let ready = false;
+let activeVariant: WorkspaceVariant = 'debug';
+let draggingId: string | null = null;
 let saveTimer: ReturnType<typeof setTimeout> | null = null;
 
 // ── helpers ──────────────────────────────────────────────────────────────
@@ -63,6 +78,16 @@ function nextZ(): number {
   const z = get().zTop + 1;
   store.setState({ zTop: z });
   return z;
+}
+
+/** Reset a panel's content scroll to the top — a freshly opened file always
+ *  starts at the top of the viewport (scroll is never persisted across pages). */
+function resetPanelScroll(pid: string): void {
+  if (typeof document === 'undefined') return;
+  requestAnimationFrame(() => {
+    const v = document.querySelector<HTMLElement>(`[data-panel-id="${CSS.escape(pid)}"] .wp-scroll__viewport`);
+    if (v) v.scrollTop = 0;
+  });
 }
 
 function floatingCount(): number {
@@ -119,7 +144,8 @@ function setActive(id: string | null, syncDock = true): void {
 
 // ── persistence ─────────────────────────────────────────────────────────
 function schedulePersist(): void {
-  if (!ready) return;
+  // The content workspace is derived from the Atlas each load — nothing to save.
+  if (!ready || activeVariant === 'content') return;
   if (saveTimer) clearTimeout(saveTimer);
   saveTimer = setTimeout(() => workspace.saveLayout(), 250);
 }
@@ -127,10 +153,12 @@ function schedulePersist(): void {
 // ── controller ─────────────────────────────────────────────────────────
 export const workspace = {
   /** Wire Dockview events once the layout is ready, then load persisted/default. */
-  bind(api: DockviewApi): void {
+  bind(api: DockviewApi, variant: WorkspaceVariant = 'debug'): void {
     // Re-initialize cleanly for this Dockview instance (React StrictMode/HMR can
     // mount twice); auto-persist means no arrangement is lost across a remount.
     ready = false;
+    activeVariant = variant;
+    setChrome(variant);
     store.setState({ panels: {}, tabOrder: [], activeId: null, maximizedId: null, zTop: 10, snapPreview: null });
     api.clear();
 
@@ -149,6 +177,10 @@ export const workspace = {
     api.onDidMovePanel(syncTabOrder);
 
     ready = true;
+    if (variant === 'content') {
+      this.loadContentDefault();
+      return;
+    }
     const persisted = loadLayout();
     if (persisted) this.hydrate(persisted);
     else this.loadDefault();
@@ -247,11 +279,16 @@ export const workspace = {
     schedulePersist();
   },
 
-  snapPanel(id: string, region: SnapRegion): void {
+  /** Set/clear the panel currently being dragged (reflow ignores it — see reflow). */
+  setDraggingId(id: string | null): void {
+    draggingId = id;
+  },
+
+  snapPanel(id: string, region: SnapRegion, area: Rect = get().workspaceRect): void {
     if (!SNAP_MODE[region]) throw new Error(`unsupported snap location: "${region}"`);
     const p = requirePanel(id);
     removeFromDock(id);
-    const rect = snapRect(region, get().workspaceRect);
+    const rect = snapRect(region, area);
     const previousState = p.previousState ?? snapshot(p);
     store.setState((s) => ({
       tabOrder: s.tabOrder.filter((x) => x !== id),
@@ -343,6 +380,8 @@ export const workspace = {
     const ws = get().workspaceRect;
     if (ws.width === 0 || ws.height === 0) return;
     for (const p of Object.values(get().panels)) {
+      // Never yank the panel the user is actively dragging (e.g. a mid-drag resize/expand).
+      if (p.id === draggingId) continue;
       if (isSnapped(p.mode)) {
         const region = p.mode.replace('snapped-', '') as SnapRegion;
         patch(p.id, snapRect(region, ws));
@@ -422,6 +461,62 @@ export const workspace = {
     this.openPanel('terminal', 'terminal-1');
     this.floatPanel('terminal-1');
     setActive('notes-1');
+  },
+
+  /** The homepage content workspace: a single Featured tab; readers open on demand. */
+  loadContentDefault(): void {
+    this.openPanel('featured', 'featured');
+    setActive('featured');
+  },
+
+  /** Route a workspace destination to the right content panel (open or focus). */
+  open(dest: WorkspaceDestination): void {
+    switch (dest.type) {
+      case 'document':
+        return this.openContentPanel('reader', `reader-${dest.docId}`, dest.title ?? 'Document', {
+          docId: dest.docId,
+          layout: dest.layout ?? 'standard',
+        });
+      case 'project':
+        return this.openContentPanel('reader', `reader-${dest.projectId}`, dest.title ?? 'Project', {
+          docId: dest.projectId,
+          layout: dest.layout ?? 'preview-left',
+        });
+      case 'folder':
+        return this.openContentPanel('folder', `folder-${dest.collectionId}`, dest.title ?? 'Folder', {
+          collectionId: dest.collectionId,
+        });
+      case 'collection':
+        return this.openContentPanel('compiled', `compiled-${dest.collectionId}`, dest.title ?? 'Page', {
+          collectionId: dest.collectionId,
+        });
+      case 'page':
+        return this.openContentPanel('page', `page-${dest.component}`, dest.title ?? 'Page', {
+          component: dest.component,
+        });
+      case 'navigation':
+        return; // reserved for a future graph/index view
+    }
+  },
+
+  /** Open (or focus) a content panel, carrying its lifted data (docId/collectionId/…). */
+  openContentPanel(type: PanelType, pid: string, title: string, data: Record<string, unknown>): void {
+    const exists = !!get().panels[pid];
+    if (exists) this.tabPanel(pid);
+    else this.openPanel(type, pid);
+    patch(pid, { title });
+    for (const [k, v] of Object.entries(data)) this.setData(pid, k, v);
+    resetPanelScroll(pid); // freshly opened / re-focused pages start at the top
+  },
+
+  /** Activate the Featured tab (used when returning to the centered island). */
+  showFeatured(): void {
+    if (get().panels['featured']) setActive('featured');
+  },
+
+  /** Back-compat shim — opens a document as a reader tab. */
+  openReader(doc: { id: string; title: string }): void {
+    this.open({ type: 'document', docId: doc.id, title: doc.title });
   },
 
   saveLayout(): void {

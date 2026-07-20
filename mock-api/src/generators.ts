@@ -99,18 +99,41 @@ export function wallpaperSpec(palette: ThemePalette, seed: number) {
   return { canvas: { width: W, height: H, cell }, palette, blocks: items };
 }
 
-/** A simple thumbnail card (title + type badge). */
+/** Greedy wrap on whole words, at most `max` lines (the last one elided). */
+function wrap(text: string, perLine: number, max: number): string[] {
+  const lines: string[] = [];
+  let line = '';
+  for (const word of text.split(/\s+/)) {
+    const next = line ? `${line} ${word}` : word;
+    if (next.length > perLine && line) {
+      lines.push(line);
+      line = word;
+      if (lines.length === max) break;
+    } else {
+      line = next;
+    }
+  }
+  if (lines.length < max && line) lines.push(line);
+  const used = lines.join(' ').length;
+  if (used < text.length) lines[lines.length - 1] += '…';
+  return lines;
+}
+
+/** A simple thumbnail card (wrapped title + accent bar). */
 export function thumbnailSvg(doc: Document): string {
   const bg = doc.type === 'pdf' ? '#2a1520' : '#12121a';
   const accent = doc.type === 'pdf' ? '#f0709a' : '#8b8cf7';
-  const title = escapeXml(doc.title.length > 30 ? doc.title.slice(0, 29) + '…' : doc.title);
+  const lines = wrap(doc.title, 22, 3);
+  // Centre the block vertically: 300/2, minus half the stack, plus cap-height nudge.
+  const top = 150 - ((lines.length - 1) * 38) / 2 + 11;
+  const text = lines
+    .map((l, i) => `<tspan x="28" y="${top + i * 38}">${escapeXml(l)}</tspan>`)
+    .join('');
   return (
     `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 300">` +
     `<rect width="480" height="300" fill="${bg}"/>` +
     `<rect x="0" y="0" width="480" height="6" fill="${accent}"/>` +
-    `<text x="28" y="150" fill="#f4f4f5" font-family="system-ui,sans-serif" font-size="30" font-weight="700">${title}</text>` +
-    `<rect x="28" y="230" width="64" height="24" rx="5" fill="${accent}"/>` +
-    `<text x="60" y="247" fill="#0a0a0c" font-family="ui-monospace,monospace" font-size="13" font-weight="700" text-anchor="middle">${doc.type.toUpperCase()}</text>` +
+    `<text fill="#f4f4f5" font-family="system-ui,sans-serif" font-size="30" font-weight="700">${text}</text>` +
     `</svg>`
   );
 }

@@ -1,69 +1,28 @@
 import { useWorkspaceStore } from './store';
-import { workspace } from './controller';
+import { DebugPanelContent } from './debug/DebugPanels';
+import { FeaturedPanel } from './content/FeaturedPanel';
+import { DocView } from './content/DocView';
+import { FolderView } from './content/FolderView';
+import { CompiledPanel } from './content/CompiledPanel';
+import { PageContent } from './content/PageContent';
 
-const TREE = [
-  '📁 src',
-  '  📄 index.tsx',
-  '  📁 workspace',
-  '    📄 controller.ts',
-  '    📄 drag.ts',
-  '    📄 store.ts',
-  '📁 public',
-  '📄 README.md',
-];
-
-const TERM_LINES = [
-  '$ workspace --status',
-  'dockview: ready · panels: live',
-  '$ echo "drag a tab out to float it"',
-  'drag a tab out to float it',
-  '$ _',
-];
-
-/** Placeholder, per-type content. Notes text is lifted to store so it survives
- * tabbed↔floating remounts. Buttons/inputs here stay independently interactive. */
+/** Routes a panel to its content: content panels (homepage) or debug panels. */
 export function PanelTypeContent({ panelId }: { panelId: string }) {
-  const p = useWorkspaceStore((s) => s.panels[panelId]);
-  const text = useWorkspaceStore((s) => (s.panels[panelId]?.data?.text as string) ?? '');
-  if (!p) return null;
+  const type = useWorkspaceStore((s) => s.panels[panelId]?.type);
+  if (!type) return null;
 
-  switch (p.type) {
-    case 'notes':
-      return (
-        <textarea
-          className="wp-notes"
-          value={text}
-          onChange={(e) => workspace.setData(panelId, 'text', e.target.value)}
-          placeholder="Scratch notes… (persisted per panel; survives dragging out to float)"
-          spellCheck={false}
-        />
-      );
-    case 'file-browser':
-      return (
-        <ul className="wp-tree">
-          {TREE.map((t, i) => (
-            <li key={i}>{t}</li>
-          ))}
-        </ul>
-      );
-    case 'preview':
-      return (
-        <div className="wp-preview">
-          <span>preview surface</span>
-        </div>
-      );
-    case 'terminal':
-      return <pre className="wp-term">{TERM_LINES.join('\n')}</pre>;
-    case 'settings':
-      return (
-        <div className="wp-settings">
-          {['Wallpaper', 'Snap zones', 'Autosave layout'].map((label, i) => (
-            <label key={label} className="wp-setting">
-              <span>{label}</span>
-              <span className={`wp-switch ${i !== 1 ? 'on' : ''}`} aria-hidden="true" />
-            </label>
-          ))}
-        </div>
-      );
+  switch (type) {
+    case 'featured':
+      return <FeaturedPanel panelId={panelId} />;
+    case 'reader':
+      return <DocView panelId={panelId} />;
+    case 'folder':
+      return <FolderView panelId={panelId} />;
+    case 'compiled':
+      return <CompiledPanel panelId={panelId} />;
+    case 'page':
+      return <PageContent panelId={panelId} />;
+    default:
+      return <DebugPanelContent panelId={panelId} />;
   }
 }

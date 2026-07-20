@@ -1,8 +1,8 @@
 import { useWorkspaceStore } from './store';
 import { workspace } from './controller';
-import { getRootEl, getWorkspaceEl } from './refs';
+import { getTabStripEl, getWorkspaceEl } from './refs';
 import { detectSnap, snapRect } from './snap';
-import type { SnapRegion, WorkspacePanelState } from './types';
+import type { Rect, SnapRegion, WorkspacePanelState } from './types';
 
 interface DragTarget {
   kind: 'tab' | SnapRegion | null;
@@ -57,33 +57,41 @@ export function startPanelDrag(
   }
 
   const target: DragTarget = { kind: null, x: 0, y: 0, width, height };
+  workspace.setDraggingId(panelId);
 
   const onMove = (e: PointerEvent) => {
     e.preventDefault();
+    // Single live source of truth for coords, detection size, AND clamping —
+    // the stage rect measured this frame (tracks the centered↔expanded animation).
     const stage = rectOf(getWorkspaceEl());
-    const root = rectOf(getRootEl());
-    const area = store.getState().workspaceRect;
+    const ws: Rect = { x: 0, y: 0, width: stage.width, height: stage.height };
 
     // Always follow the pointer (clamped in bounds).
     const localX = e.clientX - stage.left;
     const localY = e.clientY - stage.top;
-    const nx = clampAxis(localX - grabX, width, area.width);
-    const ny = clampAxis(localY - grabY, height, area.height);
+    const nx = clampAxis(localX - grabX, width, ws.width);
+    const ny = clampAxis(localY - grabY, height, ws.height);
     workspace.setGeometry(panelId, 'floating', { x: nx, y: ny, width, height });
 
-    // (1) Tab organizer hitbox = the strip between the root top and the stage top.
-    const inTabBar =
-      e.clientX >= root.left && e.clientX <= root.right && e.clientY >= root.top && e.clientY < stage.top;
-    if (inTabBar) {
+    // (1) Tab dock — real element hit-test in client coords. Only the explicit
+    // tab-strip overlay qualifies; a document/panel body never does.
+    const strip = getTabStripEl()?.getBoundingClientRect();
+    const overTabs =
+      !!strip &&
+      e.clientX >= strip.left &&
+      e.clientX <= strip.right &&
+      e.clientY >= strip.top &&
+      e.clientY <= strip.bottom;
+    if (overTabs) {
       target.kind = 'tab';
-      store.setState({ snapPreview: { kind: 'tab', rect: { x: 0, y: 0, width: area.width, height: 0 } } });
+      store.setState({ snapPreview: { kind: 'tab', rect: { x: 0, y: 0, width: ws.width, height: 0 } } });
       return;
     }
 
     // (2)/(3) corner + edge snapping (corners take priority inside detectSnap).
-    const region = detectSnap(localX, localY, area);
+    const region = detectSnap(localX, localY, ws);
     if (region) {
-      const rect = snapRect(region, area);
+      const rect = snapRect(region, ws);
       target.kind = region;
       target.x = rect.x;
       target.y = rect.y;
@@ -106,12 +114,15 @@ export function startPanelDrag(
     window.removeEventListener('pointerup', onUp);
     window.removeEventListener('keydown', onKey);
     store.setState({ snapPreview: null });
+    workspace.setDraggingId(null);
   };
 
   const onUp = () => {
+    const stage = rectOf(getWorkspaceEl());
+    const ws: Rect = { x: 0, y: 0, width: stage.width, height: stage.height };
     cleanup();
     if (target.kind === 'tab') workspace.tabPanel(panelId);
-    else if (target.kind) workspace.snapPanel(panelId, target.kind);
+    else if (target.kind) workspace.snapPanel(panelId, target.kind, ws);
     else workspace.commitGeometry(panelId, { x: target.x, y: target.y, width: target.width, height: target.height });
   };
 

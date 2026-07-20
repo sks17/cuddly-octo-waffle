@@ -3,6 +3,8 @@ import { useWorkspaceStore } from '../store';
 const LABEL: Record<string, string> = {
   left: 'Snap left half',
   right: 'Snap right half',
+  'top-left': 'Snap top-left',
+  'top-right': 'Snap top-right',
   'bottom-left': 'Snap bottom-left',
   'bottom-right': 'Snap bottom-right',
 };

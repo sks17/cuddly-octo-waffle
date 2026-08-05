@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { Logo } from '@/components/ui/Logo';
 
 interface FooterLink {
   label: string;
@@ -43,8 +44,9 @@ export function Footer() {
     <footer className="footer">
       <div className="footer__inner">
         <div className="footer__brand">
+          {/* Same mark as the taskbar, at the taskbar's size. */}
           <span className="brand">
-            <span className="brand__mark" aria-hidden="true" />
+            <Logo size={24} className="brand__logo" />
             <span className="brand__name">sks17</span>
           </span>
           <p>

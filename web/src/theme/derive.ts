@@ -22,9 +22,14 @@ function mix(a: string, b: string, t: number): string {
   return toHex([ar * t + br * (1 - t), ag * t + bg * (1 - t), ab * t + bb * (1 - t)]);
 }
 
-function rgba(hex: string, alpha: number): string {
+export function rgba(hex: string, alpha: number): string {
   const [r, g, b] = toRgb(hex);
   return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
+
+/** Linear blend from `a` to `b`; `t` runs 0 → 1. Used by the accent cycle. */
+export function lerpColor(a: string, b: string, t: number): string {
+  return mix(b, a, t);
 }
 
 /** WCAG relative luminance. */
@@ -44,7 +49,7 @@ function contrast(a: string, b: string): number {
 }
 
 /** Pick the pole (near-black / near-white) that best contrasts with `bg`. */
-function contrastPick(bg: string): string {
+export function contrastPick(bg: string): string {
   return contrast(bg, '#0b0b0b') >= contrast(bg, '#ffffff') ? '#0b0b0b' : '#f5f5f5';
 }
 
@@ -56,7 +61,10 @@ function contrastPick(bg: string): string {
 export function deriveTheme(def: ThemeDefinition): AppTheme {
   const { bg, main, sub, text } = def.palette;
   const dark = def.appearance === 'dark';
-  const bgLight = luminance(bg) > 0.5;
+  // By contrast, not by a luminance threshold: plenty of ported backgrounds are
+  // saturated mid-tones (pink, teal) whose luminance sits under 0.5 while a dark
+  // pole still reads far better on them than a light one.
+  const bgLight = contrast(bg, '#161616') >= contrast(bg, '#ededed');
 
   // Ensure body text is legible against the background (some ported palettes
   // carry a low-contrast text color); fall back to a safe pole if needed.
@@ -77,5 +85,5 @@ export function deriveTheme(def: ThemeDefinition): AppTheme {
     taskbarBackground: rgba(bg, 0.72),
     panelShadow: dark ? 'rgba(0, 0, 0, 0.7)' : 'rgba(0, 0, 0, 0.16)',
   };
-  return { id: def.id, name: def.name, appearance: def.appearance, colors };
+  return { id: def.id, name: def.name, appearance: def.appearance, colors, animation: def.animation };
 }

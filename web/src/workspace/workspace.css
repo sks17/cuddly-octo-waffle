@@ -7,19 +7,19 @@
   overflow-y: auto;
   overflow-x: hidden;
   scrollbar-width: thin;
-  scrollbar-color: rgba(255, 255, 255, 0.22) transparent;
+  scrollbar-color: color-mix(in srgb, var(--foreground) 22%, transparent) transparent;
 }
 .wp-page::-webkit-scrollbar {
   width: 11px;
 }
 .wp-page::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.18);
+  background: color-mix(in srgb, var(--foreground) 18%, transparent);
   border-radius: 999px;
   border: 3px solid transparent;
   background-clip: padding-box;
 }
 .wp-page::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.3);
+  background: color-mix(in srgb, var(--foreground) 30%, transparent);
   background-clip: padding-box;
 }
 .wp-page::-webkit-scrollbar-track {
@@ -56,10 +56,10 @@
   z-index: 3;
   font-family: var(--font-mono);
   font-size: 13px;
-  color: var(--foreground);
+  color: var(--muted-foreground);
 }
 .wp-intro__back:hover {
-  color: #fff;
+  color: var(--foreground);
 }
 .wp-intro__copy {
   position: relative;
@@ -173,8 +173,12 @@
   --dv-tabs-container-height: var(--wp-tabbar-h);
   --dv-tab-divider-color: transparent;
   --dv-separator-border: var(--border-soft);
+  /* All four tab-text states, or Dockview's own theme keeps its hardcoded
+     white/grey for the ones we skip — unreadable on light themes. */
   --dv-activegroup-visiblepanel-tab-color: var(--foreground);
+  --dv-activegroup-hiddenpanel-tab-color: var(--muted-foreground);
   --dv-inactivegroup-visiblepanel-tab-color: var(--muted-foreground);
+  --dv-inactivegroup-hiddenpanel-tab-color: var(--muted-foreground);
   --dv-icon-hover-background-color: var(--surface-hover);
 }
 .wp-dock .dv-tabs-and-actions-container {
@@ -196,13 +200,13 @@
   background: var(--surface-elevated);
   border: 1px solid var(--border);
   border-radius: 10px;
-  box-shadow: 0 14px 44px -14px rgba(0, 0, 0, 0.72);
+  box-shadow: 0 14px 44px -14px var(--panel-shadow);
   overflow: hidden;
   color: var(--foreground);
 }
 .wp-card.is-active {
   border-color: rgba(var(--accent-rgb), 0.5);
-  box-shadow: 0 26px 66px -16px rgba(0, 0, 0, 0.86), 0 0 0 1px rgba(var(--accent-rgb), 0.25);
+  box-shadow: 0 26px 66px -16px var(--panel-shadow), 0 0 0 1px rgba(var(--accent-rgb), 0.25);
 }
 .wp-card--tabbed {
   position: absolute;
@@ -239,7 +243,7 @@
   align-items: center;
   gap: 6px;
   padding: 0 4px 0 6px;
-  background: rgba(255, 255, 255, 0.035);
+  background: color-mix(in srgb, var(--foreground) 3.5%, transparent);
   border-bottom: 1px solid var(--border);
   cursor: grab;
   user-select: none;
@@ -275,7 +279,7 @@
   color: var(--muted-foreground);
 }
 .wp-winbtn:hover {
-  background: rgba(255, 255, 255, 0.09);
+  background: color-mix(in srgb, var(--foreground) 9%, transparent);
   color: var(--foreground);
 }
 .wp-window__content {
@@ -321,7 +325,7 @@
   font-size: 12px;
   font-weight: 600;
   color: var(--foreground);
-  background: rgba(16, 16, 26, 0.78);
+  background: color-mix(in srgb, var(--surface-elevated) 88%, transparent);
   padding: 4px 12px;
   border-radius: 999px;
 }
@@ -351,7 +355,7 @@
   font-family: var(--font-mono);
   font-size: 11px;
   color: var(--foreground);
-  background: rgba(255, 255, 255, 0.06);
+  background: color-mix(in srgb, var(--foreground) 6%, transparent);
   padding: 2px 7px;
   border-radius: 5px;
 }
@@ -382,10 +386,10 @@
   border-radius: 6px;
   border: 1px solid var(--border);
   color: var(--foreground);
-  background: rgba(255, 255, 255, 0.03);
+  background: color-mix(in srgb, var(--foreground) 3%, transparent);
 }
 .wp-btn:hover {
-  background: rgba(255, 255, 255, 0.09);
+  background: color-mix(in srgb, var(--foreground) 9%, transparent);
 }
 .wp-btn--primary {
   background: var(--brand);
@@ -404,8 +408,8 @@
   height: 100%;
   resize: none;
   scrollbar-width: thin;
-  scrollbar-color: rgba(255, 255, 255, 0.25) transparent;
-  background: rgba(0, 0, 0, 0.22);
+  scrollbar-color: color-mix(in srgb, var(--foreground) 25%, transparent) transparent;
+  background: color-mix(in srgb, var(--background) 50%, transparent);
   border: 1px solid var(--border-soft);
   border-radius: 6px;
   color: var(--foreground);
@@ -435,14 +439,14 @@
   border-radius: 8px;
   color: var(--muted-foreground);
   font-size: 12px;
-  background: repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.02) 0 10px, transparent 10px 20px);
+  background: repeating-linear-gradient(45deg, color-mix(in srgb, var(--foreground) 2%, transparent) 0 10px, transparent 10px 20px);
 }
 .wp-term {
   margin: 0;
   font-family: var(--font-mono);
   font-size: 12px;
-  color: #a7f3d0;
-  background: rgba(0, 0, 0, 0.35);
+  color: color-mix(in srgb, var(--accent) 65%, var(--foreground));
+  background: color-mix(in srgb, var(--background) 70%, transparent);
   border-radius: 6px;
   padding: 10px;
   white-space: pre-wrap;
@@ -462,7 +466,7 @@
   width: 34px;
   height: 18px;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.12);
+  background: color-mix(in srgb, var(--foreground) 12%, transparent);
   position: relative;
   flex: none;
 }
@@ -477,7 +481,8 @@
   width: 14px;
   height: 14px;
   border-radius: 50%;
-  background: #fff;
+  /* Reads against the accent when on, against the tinted track when off. */
+  background: var(--accent-foreground);
   transition: transform 0.15s;
 }
 .wp-switch.on::after {
@@ -532,7 +537,7 @@
   -webkit-backdrop-filter: blur(12px);
   border: 1px solid var(--border);
   border-radius: 10px;
-  box-shadow: 0 12px 34px -12px rgba(0, 0, 0, 0.7);
+  box-shadow: 0 12px 34px -12px var(--panel-shadow);
 }
 .wp-cli__caret {
   color: var(--brand);
@@ -570,11 +575,19 @@
 .wp-tab:active {
   cursor: grabbing;
 }
+/* Set on the title itself rather than inherited from `.dv-tab`, so the theme
+   tokens win outright over whatever Dockview's stylesheet paints the tab. */
 .wp-tab__title {
   font-size: 12.5px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  color: var(--muted-foreground);
+  transition: color 0.12s;
+}
+.wp-dock .dv-tab.dv-active-tab .wp-tab__title,
+.wp-dock .dv-tab:hover .wp-tab__title {
+  color: var(--foreground);
 }
 .wp-tab__close {
   width: 18px;
@@ -591,7 +604,7 @@
   opacity: 1;
 }
 .wp-tab__close:hover {
-  background: rgba(255, 255, 255, 0.12);
+  background: color-mix(in srgb, var(--foreground) 12%, transparent);
   color: var(--foreground);
 }
 
@@ -614,7 +627,7 @@
   font-size: 12px;
   font-weight: 600;
   color: var(--foreground);
-  background: rgba(16, 16, 26, 0.72);
+  background: color-mix(in srgb, var(--surface-elevated) 88%, transparent);
   padding: 2px 10px;
   border-radius: 999px;
 }
@@ -661,24 +674,24 @@
 .wp-scroll__thumb {
   flex: 1;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.2);
+  background: color-mix(in srgb, var(--foreground) 20%, transparent);
   transition: background 0.15s;
 }
 .wp-scroll__bar:hover .wp-scroll__thumb,
 .wp-scroll__bar[data-scrolling] .wp-scroll__thumb {
-  background: rgba(255, 255, 255, 0.36);
+  background: color-mix(in srgb, var(--foreground) 36%, transparent);
 }
 
 /* dock tab overflow (Dockview-owned DOM): themed thin native scrollbar */
 .wp-dock .dv-tabs-container {
   scrollbar-width: thin;
-  scrollbar-color: rgba(255, 255, 255, 0.22) transparent;
+  scrollbar-color: color-mix(in srgb, var(--foreground) 22%, transparent) transparent;
 }
 .wp-dock .dv-tabs-container::-webkit-scrollbar {
   height: 6px;
 }
 .wp-dock .dv-tabs-container::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.22);
+  background: color-mix(in srgb, var(--foreground) 22%, transparent);
   border-radius: 999px;
 }
 
@@ -693,7 +706,7 @@
   height: min(80vh, 720px);
   border: 1px solid var(--border);
   border-radius: 14px;
-  box-shadow: 0 30px 70px -30px rgba(0, 0, 0, 0.7);
+  box-shadow: 0 30px 70px -30px var(--panel-shadow);
 }
 
 /* content: left explorer rail + main dock */
@@ -762,7 +775,7 @@
   overflow-y: auto;
   padding: 8px 6px 16px;
   scrollbar-width: thin;
-  scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+  scrollbar-color: color-mix(in srgb, var(--foreground) 20%, transparent) transparent;
 }
 .wp-side__msg {
   padding: 8px 12px;
@@ -781,7 +794,7 @@
   font-weight: 500;
 }
 .wp-node__row:hover {
-  background: rgba(255, 255, 255, 0.05);
+  background: color-mix(in srgb, var(--foreground) 5%, transparent);
 }
 .wp-node__chev {
   flex: none;
@@ -820,7 +833,7 @@
   font-size: 12.5px;
 }
 .wp-leaf:hover {
-  background: rgba(255, 255, 255, 0.05);
+  background: color-mix(in srgb, var(--foreground) 5%, transparent);
   color: var(--foreground);
 }
 .wp-leaf__icon {
@@ -848,7 +861,7 @@
   height: 40px;
   border: 1px solid var(--border);
   border-radius: 10px;
-  background: rgba(0, 0, 0, 0.28);
+  background: color-mix(in srgb, var(--background) 50%, transparent);
 }
 .wp-search:focus-within {
   border-color: rgba(var(--accent-rgb), 0.55);
@@ -900,7 +913,7 @@
   border: 1px solid var(--border-soft);
   border-radius: 8px;
   overflow: hidden;
-  background: rgba(255, 255, 255, 0.02);
+  background: color-mix(in srgb, var(--foreground) 2%, transparent);
   transition: border-color 0.14s, transform 0.14s;
 }
 .wp-tile:hover {
@@ -947,7 +960,7 @@
   padding: 9px 12px;
   border: 1px solid var(--border-soft);
   border-radius: 8px;
-  background: rgba(255, 255, 255, 0.02);
+  background: color-mix(in srgb, var(--foreground) 2%, transparent);
 }
 .wp-hit:hover {
   border-color: rgba(var(--accent-rgb), 0.45);

@@ -1,3 +1,4 @@
+import { contrastPick, rgba } from './derive';
 import type { AppTheme } from './types';
 
 /** "r, g, b" triplet from a #rgb / #rrggbb hex — lets `rgba(var(--accent-rgb), α)` follow the theme. */
@@ -9,6 +10,20 @@ function rgbTriplet(hex: string): string {
 }
 
 /**
+ * The accent-dependent slice of the canonical vars. Split out so the accent
+ * cycle (see accentCycle.ts) can repaint exactly these each frame and keep the
+ * whole accent family — contrast pick, selection tint, rgba consumers — in step.
+ */
+export function accentVars(accent: string): Record<string, string> {
+  return {
+    '--accent': accent,
+    '--accent-rgb': rgbTriplet(accent),
+    '--accent-foreground': contrastPick(accent),
+    '--selection': rgba(accent, 0.3),
+  };
+}
+
+/**
  * The canonical CSS variables the provider writes on :root. Every other token in
  * globals.css is a static alias of one of these, so overriding these re-themes
  * the entire app (utilities + bespoke CSS) live.
@@ -16,16 +31,13 @@ function rgbTriplet(hex: string): string {
 export function themeToVars(t: AppTheme): Record<string, string> {
   const c = t.colors;
   return {
-    '--accent-rgb': rgbTriplet(c.accent),
+    ...accentVars(c.accent),
     '--background': c.background,
     '--surface': c.surface,
     '--surface-elevated': c.surfaceElevated,
     '--foreground': c.foreground,
     '--muted-foreground': c.mutedForeground,
     '--border': c.border,
-    '--accent': c.accent,
-    '--accent-foreground': c.accentForeground,
-    '--selection': c.selection,
     '--scrollbar-track': c.scrollbarTrack,
     '--scrollbar-thumb': c.scrollbarThumb,
     '--taskbar-background': c.taskbarBackground,

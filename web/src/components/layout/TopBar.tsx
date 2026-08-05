@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, NavLink } from 'react-router-dom';
 import { Menu } from 'lucide-react';
 import { NAV } from '@/app/nav';
+import { Logo } from '@/components/ui/Logo';
 import { MobileMenu } from './MobileMenu';
 
 interface Props {
@@ -16,7 +17,7 @@ export function TopBar({ transparent }: Props) {
       <header className={`topbar ${transparent ? 'topbar--transparent' : 'topbar--solid'}`}>
         <div className="topbar__inner">
           <Link to="/" className="brand" aria-label="Home">
-            <span className="brand__mark" aria-hidden="true" />
+            <Logo size={24} className="brand__logo" />
             <span className="brand__name">sks17</span>
           </Link>
 

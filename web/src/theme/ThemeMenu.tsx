@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Check, RotateCcw, Search } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useTheme } from './context';
@@ -80,6 +80,14 @@ export function ThemeMenu() {
   const lights = filtered.filter((t) => t.appearance === 'light');
   const current = themes.find((t) => t.id === themeId);
 
+  // The list is long enough that the active theme is almost never on screen when
+  // the menu opens; bring it into view (not focus — the search box keeps that).
+  useEffect(() => {
+    gridRef.current
+      ?.querySelector<HTMLElement>('[data-theme-item][aria-selected="true"]')
+      ?.scrollIntoView({ block: 'center' });
+  }, []);
+
   const onGridKeyDown = (e: React.KeyboardEvent) => {
     if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return;
     e.preventDefault();
@@ -91,7 +99,9 @@ export function ThemeMenu() {
   };
 
   return (
-    <div className="flex w-[min(34rem,calc(100vw-1rem))] flex-col">
+    // 2rem, not 1rem: `100vw` counts a classic scrollbar the content can't use,
+    // and the popover is end-aligned, so a tight margin overflows the page.
+    <div className="flex w-[min(34rem,calc(100vw-2rem))] flex-col">
       <div className="border-b border-border px-3 py-2.5">
         <div className="text-[11px] font-semibold uppercase tracking-[0.09em] text-muted-foreground">
           MonkeyType themes

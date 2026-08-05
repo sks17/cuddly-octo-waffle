@@ -1,13 +1,17 @@
 import type { ThemeDefinition } from './types';
 
-/** The site's bespoke default (today's "Ink" look), first in the list. */
-export const DEFAULT_THEME_ID = 'ink';
+/**
+ * What a first-time visitor gets and what "Reset" returns to. Keep the `:root`
+ * seed in globals.css and `data-theme` in index.html on this same theme — they
+ * are what paints before the provider mounts.
+ */
+export const DEFAULT_THEME_ID = 'arch';
 
 /**
- * `ink` is the house theme; everything after it is the full Monkeytype theme
- * set, ported from the authoritative Monkeytype theme definitions and listed
- * alphabetically. The 13 semantic colors are derived from these four/five
- * values (see derive.ts).
+ * `ink` is the site's bespoke theme and stays pinned first; everything after it
+ * is the full Monkeytype theme set, ported from the authoritative Monkeytype
+ * theme definitions and listed alphabetically. The 13 semantic colors are
+ * derived from these four/five values (see derive.ts).
  *
  * Two entries have no Monkeytype counterpart — `ink` and `tokyo night` — and
  * `github dark` is Monkeytype's `github` under the name this site shipped it

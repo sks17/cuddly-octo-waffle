@@ -46,21 +46,22 @@
 }
 
 :root {
-  /* ── Canonical semantic tokens — seeded with the default (ink) theme.
-        The ThemeProvider overrides these 13 at runtime. ─────────────────── */
-  --background: #08080b;
-  --surface: #16161a;
-  --surface-elevated: #212127;
-  --foreground: #fafafa;
-  --muted-foreground: #9aa0ac;
-  --border: #2b2c31;
-  --accent: #8b8cf7;
-  --accent-rgb: 139, 140, 247;
+  /* ── Canonical semantic tokens — seeded with DEFAULT_THEME_ID (arch), which
+        is what a first-time visitor sees before the provider mounts; keep the
+        two in step. The ThemeProvider overrides these 13 at runtime. ─────── */
+  --background: #0c0d11;
+  --surface: #1f2023;
+  --surface-elevated: #313235;
+  --foreground: #f6f5f5;
+  --muted-foreground: #98989a;
+  --border: #1d1f2a;
+  --accent: #7ebab5;
+  --accent-rgb: 126, 186, 181;
   --accent-foreground: #0b0b0b;
-  --selection: rgba(139, 140, 247, 0.3);
+  --selection: rgba(126, 186, 181, 0.3);
   --scrollbar-track: transparent;
-  --scrollbar-thumb: rgba(154, 160, 172, 0.42);
-  --taskbar-background: rgba(8, 8, 11, 0.72);
+  --scrollbar-thumb: rgba(69, 72, 100, 0.42);
+  --taskbar-background: rgba(12, 13, 17, 0.72);
   --panel-shadow: rgba(0, 0, 0, 0.7);
 
   /* ── Derived aliases — reference the canonical vars so all of it re-themes. ─ */

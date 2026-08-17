@@ -16,7 +16,7 @@ function DocCard({ doc, collectionId }: { doc: AtlasDocument; collectionId: stri
   );
 }
 
-/** A collection rendered as a grid of document cards (the /projects, /blogs… view). */
+/** A collection rendered as a grid of document cards (the /projects, /research… view). */
 export function FolderView({ panelId }: { panelId: string }) {
   const collectionId = useWorkspaceStore((s) => (s.panels[panelId]?.data?.collectionId as string) ?? null);
   const { data, loading, error } = useCollectionDocs(collectionId ?? '');

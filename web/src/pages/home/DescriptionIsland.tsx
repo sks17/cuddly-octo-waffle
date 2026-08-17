@@ -6,7 +6,7 @@ import { useResolvedManifest } from '@/core/atlas/hooks';
 const STATS = [
   { label: 'Projects', collectionId: 'projects', to: '/projects' },
   { label: 'Experiences', collectionId: 'experiences', to: '/experiences' },
-  { label: 'Written', collectionId: 'blogs', to: '/blogs' },
+  { label: 'Research', collectionId: 'research', to: '/research' },
 ];
 
 /**
@@ -39,10 +39,10 @@ export function DescriptionIsland() {
               <FolderGit2 size={14} /> Browse projects
             </Link>
             <Link
-              to="/blogs"
+              to="/research"
               className="inline-flex items-center gap-1.5 rounded-md border border-border px-3 py-2 text-[13px] font-medium transition-colors hover:bg-accent"
             >
-              <PenLine size={14} /> Read Works
+              <PenLine size={14} /> Read research
             </Link>
           </div>
         </div>

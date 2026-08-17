@@ -14,9 +14,9 @@ export const ROUTE_DESTINATIONS: RouteEntry[] = [
   { path: '', resolve: () => null }, // '/' ⇒ centered
   { path: 'projects', resolve: () => destinationForCollection('projects', 'Projects') },
   { path: 'experiences', resolve: () => destinationForCollection('experiences', 'Experiences') },
+  { path: 'research', resolve: () => destinationForCollection('research', 'Research') },
   { path: 'links', resolve: () => destinationForCollection('links', 'Links') }, // compiled page
   { path: 'drafts', resolve: () => destinationForCollection('drafts', 'Drafts') },
-  { path: 'blogs', resolve: () => destinationForCollection('blogs', 'Blogs') },
   { path: 'contact', resolve: () => ({ type: 'page', component: 'contact', title: 'Contact', layout: 'standard' }) },
 ];
 

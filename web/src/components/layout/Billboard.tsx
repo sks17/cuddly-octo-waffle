@@ -45,9 +45,9 @@ export function Billboard() {
               buttonVariants({ variant: 'outline', size: 'lg' }),
               'border-white/25 text-white hover:bg-white/10 hover:text-white',
             )}
-            to="/blogs"
+            to="/research"
           >
-            Read the blog
+            Read the research
           </Link>
         </div>
       </div>

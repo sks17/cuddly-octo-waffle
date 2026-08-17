@@ -7,7 +7,7 @@ import { shell } from '../shell/controller';
 import { destinationForDoc, destinationForDocRef } from './destination';
 
 // Rows surfaced in this panel, led by the curated `featured` collection itself.
-const SECTIONS = ['featured', 'projects', 'experiences', 'links', 'drafts', 'blogs'];
+const SECTIONS = ['featured', 'projects', 'experiences', 'research', 'links', 'drafts'];
 
 function DocTile({ doc, collectionId }: { doc: AtlasDocument; collectionId: string }) {
   return (

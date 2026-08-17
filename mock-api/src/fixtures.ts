@@ -51,18 +51,18 @@ export const wallpaperSeed = (id: string) => hash(id);
 // ── Collections (pages / sections) ────────────────────────────────────────────
 export const collections: Collection[] = [
   { id: 'featured', title: 'Featured', description: 'A few highlights.',
-    documentIds: ['doc-graphview', 'doc-backdoors', 'doc-vit-positional', 'doc-paper-pigeon'] },
+    documentIds: ['doc-graphview', 'doc-nemi-absence', 'doc-backdoors', 'doc-vit-positional', 'doc-paper-pigeon'] },
   { id: 'projects', title: 'Projects', description: 'Things I built.',
-    documentIds: ['doc-graphview', 'doc-dopfone', 'doc-backdoors', 'doc-vit-positional', 'doc-drone-mapping', 'doc-tennis-pose', 'doc-paper-pigeon', 'doc-pairs-trading', 'doc-walls', 'doc-data-science', 'doc-determinant-art'] },
+    documentIds: ['doc-graphview', 'doc-dopfone', 'doc-nemi-absence', 'doc-backdoors', 'doc-vit-positional', 'doc-drone-mapping', 'doc-tennis-pose', 'doc-paper-pigeon', 'doc-pairs-trading', 'doc-walls', 'doc-data-science', 'doc-determinant-art'] },
   { id: 'experiences', title: 'Experiences', description: 'Roles & study.',
     documentIds: ['doc-experience-biosyft', 'doc-experience-seal', 'doc-experience-liberated', 'doc-experience-bluedot', 'doc-experience-uw'],
     note: 'I can send a résumé with a lot more detail on any of these — [contact me](/contact) and I will get one over to you.' },
   { id: 'links', title: 'Links', description: 'Where this work lives on the web.',
-    documentIds: ['doc-graphview', 'doc-vit-positional', 'doc-backdoors', 'doc-paper-pigeon'] },
+    documentIds: ['doc-graphview', 'doc-nemi-absence', 'doc-vit-positional', 'doc-backdoors', 'doc-paper-pigeon'] },
   { id: 'drafts', title: 'Drafts', description: 'Work in progress.',
-    documentIds: ['doc-tennis-pose', 'doc-vit-positional'] },
+    documentIds: ['doc-tennis-pose'] },
   { id: 'blogs', title: 'Blogs', description: 'Writing & research.',
-    documentIds: ['doc-backdoors', 'doc-vit-positional'] },
+    documentIds: ['doc-nemi-absence', 'doc-backdoors', 'doc-vit-positional'] },
 ];
 
 // ── Documents ────────────────────────────────────────────────────────────────
@@ -103,20 +103,42 @@ export const documents: Document[] = [
     meta: { url: 'https://www.lesswrong.com/posts/XhsSnrL5PXqyyjMrj/are-we-guarding-against-backdoors-or-failing-to-notice-them' },
   },
   {
+    id: 'doc-nemi-absence', type: 'markdown',
+    title: 'When the Circuit Isn\'t There: Establishing Absence in a Behavioral Sequence Model',
+    description: 'A calibrated null: a sequence model of mouse behaviour turns out to represent no order at all — and the same pipeline recovers a planted computation on synthetic data, which is what makes the absence readable.',
+    thumbnailUrl: thumb('doc-nemi-absence'),
+    tags: ['paper', 'interpretability', 'behavior'], links: ['doc-experience-biosyft'],
+    path: 'projects', collectionIds: ['projects', 'links', 'blogs', 'featured'],
+    contentUrl: content('doc-nemi-absence'),
+    associated: [
+      { id: 'a8', kind: 'pdf', mime: 'application/pdf', title: 'NEMI abstract', url: asset('doc-nemi-absence', 'abstract.pdf') },
+    ],
+    createdAt: '2026-08-17T00:00:00.000Z', updatedAt: now,
+    meta: {
+      layout: 'preview-left',
+      url: 'https://zenodo.org/records/21970594',
+      doi: '10.5281/zenodo.21970594',
+      venue: 'NEMI 2026 — New England Mechanistic Interpretability Workshop, Boston University',
+    },
+  },
+  {
     id: 'doc-vit-positional', type: 'markdown',
     title: 'Does Positional Information Causally Constrain Background Shortcut Reliance in Vision Transformers?',
-    description: 'Attenuating the positional signal in frozen ViTs causally raises their reliance on background shortcuts.',
+    description: 'Attenuating the positional signal in frozen ViTs monotonically raises their reliance on background shortcuts — in all eight models, whatever the encoding scheme.',
     thumbnailUrl: thumbFile('doc-vit-positional.png'),
     tags: ['paper', 'vision', 'transformers'], links: [],
-    path: 'projects', collectionIds: ['projects', 'links', 'blogs', 'drafts', 'featured'],
+    path: 'projects', collectionIds: ['projects', 'links', 'blogs', 'featured'],
     contentUrl: content('doc-vit-positional'),
     associated: [
       { id: 'a1', kind: 'image', mime: 'image/png', title: 'Poster', url: asset('doc-vit-positional', 'poster.png') },
+      { id: 'a9', kind: 'pdf', mime: 'application/pdf', title: 'Preprint', url: asset('doc-vit-positional', 'paper.pdf') },
     ],
     createdAt: '2026-05-01T00:00:00.000Z', updatedAt: now,
     meta: {
       layout: 'preview-left',
-      url: 'https://drive.google.com/file/d/13pJmwFTRaDlWN6Orf-nBu6iJz76v1AeH/view?usp=sharing',
+      url: 'https://zenodo.org/records/21971017',
+      doi: '10.5281/zenodo.21971017',
+      code: 'https://github.com/sks17/posvit',
     },
   },
   {
@@ -245,7 +267,8 @@ export const documentById = new Map(documents.map((d) => [d.id, d]));
 
 // ── Markdown bodies (pdf docs serve their file from `public/documents/`) ──────
 export const markdownBodies: Record<string, string> = {
-  'doc-vit-positional': `# Does Positional Information Causally Constrain Background Shortcut Reliance in Vision Transformers?\n\nThis paper, soon to be a preprint, investigates whether the positional signal in Vision Transformers (ViTs) *causally* governs their reliance on background shortcuts.\n\n## Key findings\n\n- **A causal link.** Attenuating the functional positional signal within frozen ViT checkpoints monotonically increases background reliance across all eight tested models.\n- **Encoding agnosticism.** The effect is independent of the encoding scheme used (APE, RoPE-Axial, RoPE-Mixed, and hybrids); all schemes were found to be statistically equivalent, challenging the assumption that rotary encodings are more robust to these shortcuts.\n\n→ [Paper and poster](https://drive.google.com/file/d/13pJmwFTRaDlWN6Orf-nBu6iJz76v1AeH/view?usp=sharing)`,
+  'doc-nemi-absence': `# When the Circuit Isn't There: Establishing Absence in a Behavioral Sequence Model\n\n*Accepted for poster presentation at the 3rd New England Mechanistic Interpretability (NEMI) Workshop, Boston University, August 2026.*\n\n## Abstract\n\nMotion Sequencing tokenizes mouse behavior into a fixed vocabulary of discrete movement primitives, and prior work reports that appending an empirical first-order transition matrix to token-frequency features yields no statistically meaningful gain. This result is often read as suggestive but rarely interrogated against what a sequence model computes.\n\nUsing the public moseq-drugs deposit (501 open-field sessions, 15 compounds across 6 clinical classes plus vehicle, 45 drug–dose conditions) with the tokenizer held fixed, we replicate that null and show it is stronger than reported. Scoring every model on mice absent from its training set, the transition matrix does not merely fail to help: it degrades macro-F1 from 0.667 ± 0.040 to 0.569 ± 0.048.\n\nFour independent manipulations then converge on the absence of any sequential signal. Hashed 2/3/4-gram features (−0.003) and a single-layer 64-unit GRU with full access to order and duration (−0.0002) are indistinguishable from frequency alone. A surrogate decomposition separates timing from ordering: destroying drug-time alignment costs −0.0288 ± 0.0070, whereas destroying sequential structure beyond that costs +0.0005 ± 0.0142. Chunk-shuffle performance is flat across block sizes 1–32. Regressing out token frequency collapses performance to 0.094 against a 0.079 floor; label permutation gives p = 0.000.\n\nWhich actions occur, and when they fall in the pharmacokinetic window, is a sufficient statistic for drug class in this representation.\n\nA performance null cannot separate absent signal from inadequate features, so we ask instead whether the trained model represents order at all. It does not. Activation patching recovers no subspace whose intervention shifts the class logit beyond its random-subspace null (best normalized recovery 0.11 ± 0.06 across k = 1–8; null median 0.09), and Distributed Alignment Search trained to align a hidden subspace with an order-dependent variable reaches interchange-intervention accuracy 0.52 ± 0.04 against 0.50 chance.\n\nThe same pipeline finding nothing is not a method failure. On synthetic sequences from a known HMM whose two conditions have identical token frequencies by construction (Cohen's d = 0.022; a frequency-only model at 0.458) and differ only by an inserted duration dependency, it recovers the planted computation at interchange-intervention accuracy 0.966.\n\nThe control also yields a methodological caution: the random-subspace null is bimodal, with 8% of random 3-d subspaces matching the recovered subspace. High IIA against a mean-valued random baseline can misreport localization when that baseline is not unimodal.\n\nAblation without a calibrated control is a failed search effort. With one, it can serve as a measurement.\n\n## Reference\n\n- **Record** — https://zenodo.org/records/21970594\n- **DOI** — [10.5281/zenodo.21970594](https://doi.org/10.5281/zenodo.21970594)\n- **Venue** — [NEMI 2026 accepted work](https://nemiconf.github.io/summer26/accepted_work.html)\n\nThe behavioural-video side of this is the same ground I work on at [BioSyft](doc-experience-biosyft).`,
+  'doc-vit-positional': `# Does Positional Information Causally Constrain Background Shortcut Reliance in Vision Transformers?\n\n*Preprint · Zenodo · August 2026*\n\n## Abstract\n\nVision Transformers (ViTs) match or exceed the strongest architectures for object recognition, but, like Convolutional Neural Networks (CNNs), they can exploit image backgrounds rather than foreground, focused objects. Whether a ViT's positional encoding causally governs this reliance has not been thoroughly tested in the literature, and it is also unclear whether rotary encodings (RoPE) constrain such shortcuts more effectively than absolute encodings (APE). In this work, we probe this assumption by scaling the positional signal of eight identically trained ViT checkpoints and measuring the resulting changes in background reliance on ImageNet-9. We find that attenuating the positional signal monotonically raises background reliance in every model (for example, from 5.1 to 12.8 percentage points), that the effect is invariant to the encoding scheme, and that the effect is specific to spatial information loss. These findings extend to the Waterbirds dataset (Sagawa et al., 2020). We investigate several mechanisms and find little evidence that any single mechanism carries the effect.\n\n## Key findings\n\n- **A causal link.** Attenuating the functional positional signal within frozen ViT checkpoints monotonically increases background reliance across all eight tested models.\n- **Encoding agnosticism.** The effect is independent of the encoding scheme used (APE, RoPE-Axial, RoPE-Mixed, and hybrids); all schemes were found to be statistically equivalent, challenging the assumption that rotary encodings are more robust to these shortcuts.\n- **Spatial, not capacity.** The effect is specific to the loss of spatial information, and it carries beyond ImageNet-9 to Waterbirds.\n\n## Reference\n\n- **Preprint** — https://zenodo.org/records/21971017\n- **DOI** — [10.5281/zenodo.21971017](https://doi.org/10.5281/zenodo.21971017)\n- **Code** — https://github.com/sks17/posvit`,
   'doc-drone-mapping': `# Drone Mapping Startup (T65 Redbull Ideathon Nationally)\n\nAn autonomous drone swarm that walks into an unknown interior and comes back out with a map. A fleet of drones divides the space between them, explores it in parallel, and reports coverage as it goes — no operator flying anything by hand.\n\nThe clip is the swarm-scan simulator: five drones under an active-scan mission, each with its own battery and state, filling in object coverage as they sweep the structure.\n\n## The idea\n\n- **Swarm, not a single drone** — the space is partitioned between drones, so coverage scales with the fleet.\n- **Autonomous exploration** — each drone picks its own next target, and idles when its region is done.\n- **Live coverage read-out** — objects scanned, objects pending, and per-drone battery and state, all in one HUD.\n\nTaken to the national Red Bull Ideathon, where it placed in the top 65 nationally.`,
   'doc-tennis-pose': `# Pose Segmentation for Tennis Serves\n\nSegmenting the tennis serve, frame by frame, into the phases a coach actually talks about — using the pose technology already proven on the baseball pitch and pointing it at a stroke with the same load, rotation and release structure.\n\n- **Borrowed from baseball.** The pitch and the serve share a kinetic chain, so the segmentation approach transfers.\n- **Headed for the App Store.** The target is a phone propped at the side of the court, not a lab.\n\n*In progress — it grows out of the pose work at [BioSyft](doc-experience-biosyft).*`,
   'doc-pairs-trading': `# Quantitative Pairs Trading\n\nA quantitative research pipeline built on pairs trading. It downloads historical stock prices, identifies correlated pairs, generates mean-reversion signals with the Ornstein–Uhlenbeck process, and produces the visualisations needed to validate the trading assumptions and evaluate performance.\n\n## How it works\n\n- **Data acquisition** — daily OHLCV from Yahoo Finance across a configurable universe (technology, financials, energy, consumer goods).\n- **Price panel** — raw prices become an aligned date × symbol matrix, forward-filled, with no lookahead bias.\n- **Pair selection** — rolling correlation analysis; only pairs above a threshold (default 0.7) are traded.\n- **Signal generation** — log-price spreads with dynamic hedge ratios, rolling z-scores, enter at |z| > 2.0 and exit at |z| < 0.5.\n- **Performance analysis** — trades simulated with realistic transaction costs; CAGR, Sharpe and maximum drawdown.\n- **Reporting** — 25+ research-grade plots validating the statistical assumptions.\n\n## Stack\n\nPython 3.10+, Pandas, NumPy, yfinance, Matplotlib, SciPy, scikit-learn and PyArrow (Parquet).\n\n## Sample results\n\nA two-year backtest (2024–2026): 10 pairs analysed, 98 trades executed, correlations from 0.79 to 0.91, roughly 49 trades a year.`,

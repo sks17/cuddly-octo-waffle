@@ -1164,6 +1164,27 @@ h6.md-h {
   width: 100%;
   height: auto;
 }
+/*
+ * A PDF preview is a reader, not a picture: unlike an image it has no intrinsic
+ * height to grow to, so the pane is given one and the embedded viewer scrolls
+ * inside it while the abstract beside it scrolls on its own.
+ */
+.wp-doc__pdf {
+  display: block;
+  width: 100%;
+  height: min(78vh, 900px);
+  border: 0;
+  background: var(--surface);
+}
+/* The embedded viewer spends part of that width on its own toolbar and page rail,
+   so a PDF pane is given more of the split than a picture would need. */
+.wp-doc--pdf {
+  grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
+}
+/* Phones don't render PDFs in an iframe, so there the pane holds a way out instead. */
+.wp-doc__preview--pdf-link {
+  padding: 14px;
+}
 .wp-doc__aside {
   min-width: 0;
 }

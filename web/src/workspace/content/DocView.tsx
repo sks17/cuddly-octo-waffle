@@ -4,7 +4,7 @@ import { shell } from '../shell/controller';
 import { useNarrow } from '../useNarrow';
 import { useDocMarkdown, useDocument } from '@/core/atlas/hooks';
 import { atlas } from '@/core/atlas/client';
-import { previewFileFor } from '@/core/atlas/meta';
+import { isPdfFile, isVideoFile, previewFileFor } from '@/core/atlas/meta';
 import type { WorkspaceLayout } from '../types';
 import { MiniMarkdown } from './MiniMarkdown';
 
@@ -48,11 +48,26 @@ export function DocView({ panelId }: { panelId: string }) {
 
   if (layout === 'preview-left' && doc) {
     const preview = previewFileFor(doc);
-    const isVideo = !!preview && (preview.kind === 'video' || preview.mime.startsWith('video/'));
+    const isVideo = !!preview && isVideoFile(preview);
+    // A PDF preview is its own reader: the embedded viewer scrolls the pane's height.
+    // Mobile browsers won't render one in an iframe, so there it becomes a link out.
+    const pdf = preview && isPdfFile(preview) ? preview : undefined;
+    const previewClass = pdf && narrow ? 'wp-doc__preview wp-doc__preview--pdf-link' : 'wp-doc__preview';
     return (
-      <div className="wp-doc wp-doc--preview">
-        <div className="wp-doc__preview">
-          {isVideo && preview ? (
+      <div className={pdf && !narrow ? 'wp-doc wp-doc--preview wp-doc--pdf' : 'wp-doc wp-doc--preview'}>
+        <div className={previewClass}>
+          {pdf ? (
+            narrow ? (
+              <a className="wp-pdf-card__open" href={atlas.abs(pdf.url)} target="_blank" rel="noreferrer">
+                <FileText size={14} />
+                Open the {pdf.title ?? 'PDF'}
+              </a>
+            ) : (
+              // Fit-to-width in a column this narrow. Firefox's pdf.js honours both;
+              // Chrome ignores them, which is why the pane itself is widened in CSS.
+              <iframe className="wp-doc__pdf" title={pdf.title ?? doc.title} src={`${atlas.abs(pdf.url)}#view=FitH&pagemode=none`} />
+            )
+          ) : isVideo && preview ? (
             // The thumbnail doubles as the poster frame, so the pane fills before play.
             <video
               src={atlas.abs(preview.url)}

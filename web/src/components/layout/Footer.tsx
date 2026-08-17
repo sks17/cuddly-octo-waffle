@@ -14,7 +14,7 @@ const COLUMNS: { heading: string; links: FooterLink[] }[] = [
       { label: 'Home', to: '/' },
       { label: 'Projects', to: '/projects' },
       { label: 'Experiences', to: '/experiences' },
-      { label: 'Blogs', to: '/blogs' },
+      { label: 'Research', to: '/research' },
     ],
   },
   {

@@ -53,16 +53,16 @@ export const collections: Collection[] = [
   { id: 'featured', title: 'Featured', description: 'A few highlights.',
     documentIds: ['doc-graphview', 'doc-nemi-absence', 'doc-backdoors', 'doc-vit-positional', 'doc-paper-pigeon'] },
   { id: 'projects', title: 'Projects', description: 'Things I built.',
-    documentIds: ['doc-graphview', 'doc-dopfone', 'doc-nemi-absence', 'doc-backdoors', 'doc-vit-positional', 'doc-drone-mapping', 'doc-tennis-pose', 'doc-paper-pigeon', 'doc-pairs-trading', 'doc-walls', 'doc-data-science', 'doc-determinant-art'] },
+    documentIds: ['doc-graphview', 'doc-dopfone', 'doc-drone-mapping', 'doc-tennis-pose', 'doc-paper-pigeon', 'doc-pairs-trading', 'doc-walls', 'doc-data-science', 'doc-determinant-art'] },
   { id: 'experiences', title: 'Experiences', description: 'Roles & study.',
     documentIds: ['doc-experience-biosyft', 'doc-experience-seal', 'doc-experience-liberated', 'doc-experience-bluedot', 'doc-experience-uw'],
     note: 'I can send a résumé with a lot more detail on any of these — [contact me](/contact) and I will get one over to you.' },
+  { id: 'research', title: 'Research', description: 'Papers and write-ups, each kept next to the artifact it came from.',
+    documentIds: ['doc-nemi-absence', 'doc-vit-positional', 'doc-backdoors'] },
   { id: 'links', title: 'Links', description: 'Where this work lives on the web.',
     documentIds: ['doc-graphview', 'doc-nemi-absence', 'doc-vit-positional', 'doc-backdoors', 'doc-paper-pigeon'] },
   { id: 'drafts', title: 'Drafts', description: 'Work in progress.',
     documentIds: ['doc-tennis-pose'] },
-  { id: 'blogs', title: 'Blogs', description: 'Writing & research.',
-    documentIds: ['doc-nemi-absence', 'doc-backdoors', 'doc-vit-positional'] },
 ];
 
 // ── Documents ────────────────────────────────────────────────────────────────
@@ -97,7 +97,7 @@ export const documents: Document[] = [
     description: 'Backdoor evaluations can fail because the trigger never reaches the model at all (Part 1 / 6).',
     thumbnailUrl: thumbFile('doc-backdoors.png'),
     tags: ['ai-safety', 'evals', 'backdoors'], links: [],
-    path: 'projects', collectionIds: ['projects', 'blogs', 'links', 'featured'],
+    path: 'research', collectionIds: ['research', 'links', 'featured'],
     contentUrl: content('doc-backdoors'),
     associated: [], createdAt: '2026-07-09T00:00:00.000Z', updatedAt: now,
     meta: { url: 'https://www.lesswrong.com/posts/XhsSnrL5PXqyyjMrj/are-we-guarding-against-backdoors-or-failing-to-notice-them' },
@@ -108,7 +108,7 @@ export const documents: Document[] = [
     description: 'A calibrated null: a sequence model of mouse behaviour turns out to represent no order at all — and the same pipeline recovers a planted computation on synthetic data, which is what makes the absence readable.',
     thumbnailUrl: thumb('doc-nemi-absence'),
     tags: ['paper', 'interpretability', 'behavior'], links: ['doc-experience-biosyft'],
-    path: 'projects', collectionIds: ['projects', 'links', 'blogs', 'featured'],
+    path: 'research', collectionIds: ['research', 'links', 'featured'],
     contentUrl: content('doc-nemi-absence'),
     associated: [
       { id: 'a8', kind: 'pdf', mime: 'application/pdf', title: 'NEMI abstract', url: asset('doc-nemi-absence', 'abstract.pdf') },
@@ -127,7 +127,7 @@ export const documents: Document[] = [
     description: 'Attenuating the positional signal in frozen ViTs monotonically raises their reliance on background shortcuts — in all eight models, whatever the encoding scheme.',
     thumbnailUrl: thumbFile('doc-vit-positional.png'),
     tags: ['paper', 'vision', 'transformers'], links: [],
-    path: 'projects', collectionIds: ['projects', 'links', 'blogs', 'featured'],
+    path: 'research', collectionIds: ['research', 'links', 'featured'],
     contentUrl: content('doc-vit-positional'),
     associated: [
       { id: 'a1', kind: 'image', mime: 'image/png', title: 'Poster', url: asset('doc-vit-positional', 'poster.png') },

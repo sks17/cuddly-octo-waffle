@@ -1,8 +1,12 @@
 import type { WorkspacePanelState } from './types';
 import { PANEL_TYPES } from './types';
 
-/** Versioned key so an incompatible saved layout can be invalidated safely. */
-export const STORAGE_KEY = 'dockview-workspace-layout-v1';
+/**
+ * Versioned key so an incompatible saved layout can be invalidated safely.
+ * v2: `blogs` became `research`, so a v1 layout could restore a tab pointing at
+ * a collection that no longer exists and render an empty folder.
+ */
+export const STORAGE_KEY = 'dockview-workspace-layout-v2';
 
 export interface PersistedLayout {
   version: 1;

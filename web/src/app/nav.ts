@@ -7,8 +7,8 @@ export interface NavItem {
 export const NAV: NavItem[] = [
   { to: '/projects', label: 'Projects' },
   { to: '/experiences', label: 'Experiences' },
+  { to: '/research', label: 'Research' },
   { to: '/links', label: 'Links' },
   { to: '/drafts', label: 'Drafts' },
-  { to: '/blogs', label: 'Blogs' },
   { to: '/contact', label: 'Contact' },
 ];

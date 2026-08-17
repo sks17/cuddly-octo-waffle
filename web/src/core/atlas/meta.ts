@@ -24,3 +24,6 @@ export function externalUrlFor(doc: AtlasDocument): string | undefined {
 export function previewFileFor(doc: AtlasDocument): AssociatedFile | undefined {
   return doc.associated.find((f) => f.kind === 'image' || f.mime.startsWith('image/')) ?? doc.associated[0];
 }
+
+export const isVideoFile = (f: AssociatedFile): boolean => f.kind === 'video' || f.mime.startsWith('video/');
+export const isPdfFile = (f: AssociatedFile): boolean => f.kind === 'pdf' || f.mime === 'application/pdf';
